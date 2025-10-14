@@ -1,4 +1,5 @@
 using back_test_project.Data;
+using back_test_project.Repositories;
 using back_test_project.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,12 +13,11 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-builder.Services.AddScoped<IBookRepository, BookRepository>();
-builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
+builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
-builder.Services.AddScoped<IBookService, BookService>();
-builder.Services.AddScoped<IBookFullService, BookFullService>();
-builder.Services.AddScoped<IAuthorService, AuthorService>();
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
 builder.Services.AddCors(options =>
 {
