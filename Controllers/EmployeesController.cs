@@ -68,9 +68,6 @@ namespace back_test_project.Controllers
         public async Task<ActionResult<EmployeeCanDeleteDto>> CanDelete(int id, CancellationToken ct)
         {
             var result = await _service.CanDeleteAsync(id, ct);
-            if (!result.CanDelete && string.Equals(result.Reason, "Employee not found.", StringComparison.OrdinalIgnoreCase))
-                return NotFound(result);
-
             return Ok(result);
         }
     }
