@@ -11,7 +11,6 @@ namespace back_test_project.Controllers
         private readonly IDepartmentService _service;
         public DepartmentsController(IDepartmentService service) => _service = service;
 
-        /// <summary>Returns all existing departments (id, DepartmentName).</summary>
         [HttpGet]
         public async Task<ActionResult<IReadOnlyList<DepartmentDto>>> GetAll(CancellationToken ct)
         {

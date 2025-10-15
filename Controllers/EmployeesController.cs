@@ -11,7 +11,6 @@ namespace back_test_project.Controllers
         private readonly IEmployeeService _service;
         public EmployeesController(IEmployeeService service) => _service = service;
 
-        /// <summary>Returns table data for employees.</summary>
         [HttpGet]
         public async Task<ActionResult<IReadOnlyList<EmployeeDataDto>>> GetAll(CancellationToken ct)
         {
@@ -19,7 +18,6 @@ namespace back_test_project.Controllers
             return Ok(items);
         }
 
-        /// <summary>Returns all employees as options (id + full name).</summary>
         [HttpGet("options")]
         public async Task<ActionResult<IReadOnlyList<EmployeeOptionDto>>> GetOptions(CancellationToken ct)
         {
@@ -27,7 +25,6 @@ namespace back_test_project.Controllers
             return Ok(items);
         }
 
-        /// <summary>Returns single employee for read/edit.</summary>
         [HttpGet("{id:int}")]
         public async Task<ActionResult<EmployeeReadDto>> GetById(int id, CancellationToken ct)
         {
@@ -36,7 +33,6 @@ namespace back_test_project.Controllers
             return Ok(item);
         }
 
-        /// <summary>Create employee.</summary>
         [HttpPost]
         public async Task<ActionResult<int>> Create([FromBody] EmployeeCreateDto dto, CancellationToken ct)
         {
@@ -44,7 +40,6 @@ namespace back_test_project.Controllers
             return CreatedAtAction(nameof(GetById), new { id = newId }, newId);
         }
 
-        /// <summary>Update employee.</summary>
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] EmployeeUpdateDto dto, CancellationToken ct)
         {
@@ -57,7 +52,6 @@ namespace back_test_project.Controllers
             catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
         }
 
-        /// <summary>Delete employee (blocked if has subordinates).</summary>
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
