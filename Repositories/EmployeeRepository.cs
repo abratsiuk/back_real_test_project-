@@ -95,5 +95,10 @@ namespace back_test_project.Repositories
 
         public Task<bool> HasSubordinatesAsync(int managerId, CancellationToken ct = default)
             => _db.Employees.AnyAsync(e => e.ManagerId == managerId, ct);
+
+        public Task<bool> ExistsAsync(int id, CancellationToken ct)
+        {
+            return _db.Employees.AnyAsync(e => e.Id == id, ct);
+        }
     }
 }

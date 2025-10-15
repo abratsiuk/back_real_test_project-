@@ -11,5 +11,7 @@ namespace back_test_project.Services
         Task<int> CreateAsync(EmployeeCreateDto dto, CancellationToken ct = default);
         Task UpdateAsync(int id, EmployeeUpdateDto dto, CancellationToken ct = default);
         Task DeleteAsync(int id, CancellationToken ct = default);
+
+        Task<EmployeeCanDeleteDto> CanDeleteAsync(int id, CancellationToken ct = default);
     }
 }

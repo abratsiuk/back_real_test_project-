@@ -20,5 +20,6 @@ namespace back_test_project.Repositories
         Task DeleteAsync(Employee entity, CancellationToken ct = default);
 
         Task<bool> HasSubordinatesAsync(int managerId, CancellationToken ct = default);
+        Task<bool> ExistsAsync(int id, CancellationToken ct);
     }
 }

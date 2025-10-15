@@ -44,5 +44,18 @@ namespace back_test_project.Services
 
             await _repo.DeleteAsync(entity, ct);
         }
+
+        public async Task<EmployeeCanDeleteDto> CanDeleteAsync(int id, CancellationToken ct = default)
+        {
+            var exists = await _repo.ExistsAsync(id, ct);
+            if (!exists) return new EmployeeCanDeleteDto { CanDelete = false, Reason = "Employee not found." };
+
+            var hasSubs = await _repo.HasSubordinatesAsync(id, ct);
+            if (hasSubs) return new EmployeeCanDeleteDto { CanDelete = false, Reason = "This employee is a manager and cannot be deleted." };
+
+            return new EmployeeCanDeleteDto { CanDelete = true };
+        }
+
+
     }
 }
