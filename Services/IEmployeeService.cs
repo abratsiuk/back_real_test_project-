@@ -13,5 +13,6 @@ namespace back_test_project.Services
         Task DeleteAsync(int id, CancellationToken ct = default);
 
         Task<EmployeeCanDeleteDto> CanDeleteAsync(int id, CancellationToken ct = default);
+        Task<(IReadOnlyList<EmployeeDataDto> items, int total)> GetPageAsync(int page, int pageSize, string sort, string order, CancellationToken ct);
     }
 }

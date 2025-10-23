@@ -21,5 +21,9 @@ namespace back_test_project.Repositories
 
         Task<bool> HasSubordinatesAsync(int managerId, CancellationToken ct = default);
         Task<bool> ExistsAsync(int id, CancellationToken ct);
+
+        Task<(IReadOnlyList<EmployeeDataDto> Items, int Total)> GetPageAsync(
+                int page, int pageSize, string sort, string order, CancellationToken ct = default);
+
     }
 }

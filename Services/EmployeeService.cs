@@ -56,6 +56,9 @@ namespace back_test_project.Services
             return new EmployeeCanDeleteDto { CanDelete = true };
         }
 
-
+        public async Task<(IReadOnlyList<EmployeeDataDto> items, int total)> GetPageAsync(int page, int pageSize, string sort, string order, CancellationToken ct)
+        {
+            return await _repo.GetPageAsync(page, pageSize, sort, order, ct);
+        }
     }
 }

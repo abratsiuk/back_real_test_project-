@@ -18,6 +18,19 @@ namespace back_test_project.Controllers
             return Ok(items);
         }
 
+        [HttpGet("page")]
+        public async Task<ActionResult<PagedResultDto<EmployeeDataDto>>> GetPage(
+        [FromQuery] int page = 0,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string sort = "lastName",
+        [FromQuery] string order = "asc",
+        CancellationToken ct = default)
+        {
+            // Сервис должен уметь: отдать страницу, всего записей
+            var (items, total) = await _service.GetPageAsync(page, pageSize, sort, order, ct);
+            return Ok(new PagedResultDto<EmployeeDataDto> { Data = items, TotalCount = total });
+        }
+
         [HttpGet("options")]
         public async Task<ActionResult<IReadOnlyList<EmployeeOptionDto>>> GetOptions(CancellationToken ct)
         {
