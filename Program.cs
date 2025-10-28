@@ -11,16 +11,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//// delete folder Migrations   
-////dotnet ef migrations add Initial
-////dotnet ef database update
-
-////dotnet remove package Npgsql.EntityFrameworkCore.PostgreSQL
-////dotnet add package Microsoft.EntityFrameworkCore.SqlServer
-//builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
-
-////dotnet remove package Microsoft.EntityFrameworkCore.SqlServer
-////dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
@@ -39,25 +29,37 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
-//порт задавать только в облаке
+
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port))
 {
+    //start only in Render.com
     builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 }
 
 var app = builder.Build();
 
+// apply EF migrations automatically on container startup
+using (var scope = app.Services.CreateScope())
+{
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    try
+    {
+        logger.LogInformation("[INFO] Applying EF Core migrations...");
+        db.Database.Migrate();
+        logger.LogInformation("[INFO] Database migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "[ERROR] Failed to apply database migrations.");
+    }
+}
+
+//swagger for production in Rendewr.com
 app.UseSwagger();
 app.UseSwaggerUI();
-//// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI();
-//}
-
-//app.UseHttpsRedirection();
 
 app.UseCors("AllowAngularApp");
 
@@ -66,9 +68,16 @@ app.UseAuthorization();
 app.MapControllers();
 
 
-// ѕример минимального endpointТа
 app.MapGet("/", () => Results.Text("OK")).WithName("Root");
-// явный healthcheck Ч быстрый и всегда 200
+
+//the fastest check API:
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+
+//check that database is updated
+app.MapGet("/db-check", async (AppDbContext db) =>
+{
+    var canConnect = await db.Database.CanConnectAsync();
+    return Results.Ok(new { db = canConnect });
+});
 
 app.Run();
