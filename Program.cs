@@ -11,7 +11,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+//// delete folder Migrations   
+////dotnet ef migrations add Initial
+////dotnet ef database update
+
+////dotnet remove package Npgsql.EntityFrameworkCore.PostgreSQL
+////dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+//builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
+////dotnet remove package Microsoft.EntityFrameworkCore.SqlServer
+////dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();

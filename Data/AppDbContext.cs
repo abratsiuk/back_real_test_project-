@@ -25,7 +25,9 @@ namespace back_test_project.Data
 
                 e.Property(x => x.FirstName).IsRequired().HasMaxLength(100);
                 e.Property(x => x.LastName).IsRequired().HasMaxLength(100);
-                e.Property(x => x.Salary).HasColumnType("decimal(18,2)");
+
+                //e.Property(x => x.Salary).HasColumnType("decimal(18,2)");
+                e.Property(x => x.Salary).HasPrecision(18, 2);
 
                 // prevent cascade delete
                 e.HasOne(x => x.Department)
@@ -39,11 +41,11 @@ namespace back_test_project.Data
                     .HasForeignKey(x => x.ManagerId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // prevent to be manager for him self
-                e.ToTable(t =>
-                {
-                    t.HasCheckConstraint("CK_Employee_Manager_Not_Self", "[ManagerId] IS NULL OR [ManagerId] <> [Id]");
-                });
+                //// prevent to be manager for him self
+                //e.ToTable(t =>
+                //{
+                //    t.HasCheckConstraint("CK_Employee_Manager_Not_Self", "[ManagerId] IS NULL OR [ManagerId] <> [Id]");
+                //});
 
             });
 
