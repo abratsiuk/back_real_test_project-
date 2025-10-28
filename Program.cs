@@ -39,22 +39,36 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
+//порт задавать только в облаке
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+//// Configure the HTTP request pipeline.
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI();
+//}
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseCors("AllowAngularApp");
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+
+// ѕример минимального endpointТа
+app.MapGet("/", () => Results.Text("OK")).WithName("Root");
+// явный healthcheck Ч быстрый и всегда 200
+app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 
 app.Run();
