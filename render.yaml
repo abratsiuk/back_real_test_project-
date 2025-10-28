@@ -1,0 +1,18 @@
+﻿services:
+  - type: web
+    name: back-test-api
+    env: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /swagger
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__Default
+        fromDatabase:
+          name: back-test-db
+          property: connectionString
+
+databases:
+  - name: back-test-db
+    plan: free
