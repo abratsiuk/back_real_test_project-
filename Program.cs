@@ -11,6 +11,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowWeb", policy => policy
+        .WithOrigins(
+            "https://abratsiuk.github.io",
+            "http://localhost:4200"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod());
+});
+
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
@@ -19,22 +31,6 @@ builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("AllowAngularApp",
-//        policy => policy
-//            .WithOrigins("http://localhost:4200", "https://abratsiuk.github.io")
-//            .AllowAnyHeader()
-//            .AllowAnyMethod());
-//});
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAngularApp", policy => policy
-        .AllowAnyOrigin()      // TEMP: open CORS to all origins
-        .AllowAnyHeader()
-        .AllowAnyMethod());
-});
 
 
 var port = Environment.GetEnvironmentVariable("PORT");
@@ -45,6 +41,8 @@ if (!string.IsNullOrEmpty(port))
 }
 
 var app = builder.Build();
+
+app.UseCors("AllowWeb");
 
 // apply EF migrations automatically on container startup
 using (var scope = app.Services.CreateScope())
@@ -68,7 +66,6 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseCors("AllowAngularApp");
 
 app.UseAuthorization();
 
@@ -78,7 +75,7 @@ app.MapControllers();
 app.MapGet("/", () => Results.Text("OK")).WithName("Root");
 
 //the fastest check API:
-app.MapGet("/health", () => Results.Ok(new { status = "healthy 29102025 1613" }));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy 29102025 1626" }));
 
 //check that database is updated
 app.MapGet("/db-check", async (AppDbContext db) =>
