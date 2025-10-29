@@ -71,7 +71,7 @@ app.MapControllers();
 app.MapGet("/", () => Results.Text("OK")).WithName("Root");
 
 //the fastest check API:
-app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy 29102025 1422" }));
 
 //check that database is updated
 app.MapGet("/db-check", async (AppDbContext db) =>
