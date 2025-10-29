@@ -16,11 +16,15 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowWeb", policy => policy
         .WithOrigins(
             "https://abratsiuk.github.io",
-            "http://localhost:4200"
+            "https://back-test-api.onrender.com",
+            "http://localhost:4200",
+            "http://0.0.0.0:10000",
+            "http://0.0.0.0:1000"
         )
         .AllowAnyHeader()
         .AllowAnyMethod());
 });
+
 
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -75,7 +79,7 @@ app.MapControllers();
 app.MapGet("/", () => Results.Text("OK")).WithName("Root");
 
 //the fastest check API:
-app.MapGet("/health", () => Results.Ok(new { status = "healthy 29102025 1626" }));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy 29102025 1638" }));
 
 //check that database is updated
 app.MapGet("/db-check", async (AppDbContext db) =>
