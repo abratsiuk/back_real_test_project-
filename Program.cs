@@ -20,13 +20,20 @@ builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowAngularApp",
+//        policy => policy
+//            .WithOrigins("http://localhost:4200", "https://abratsiuk.github.io")
+//            .AllowAnyHeader()
+//            .AllowAnyMethod());
+//});
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngularApp",
-        policy => policy
-            .WithOrigins("http://localhost:4200", "https://abratsiuk.github.io")
-            .AllowAnyHeader()
-            .AllowAnyMethod());
+    options.AddPolicy("AllowAngularApp", policy => policy
+        .AllowAnyOrigin()      // TEMP: open CORS to all origins
+        .AllowAnyHeader()
+        .AllowAnyMethod());
 });
 
 
@@ -71,7 +78,7 @@ app.MapControllers();
 app.MapGet("/", () => Results.Text("OK")).WithName("Root");
 
 //the fastest check API:
-app.MapGet("/health", () => Results.Ok(new { status = "healthy 29102025 1422" }));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy 29102025 1441" }));
 
 //check that database is updated
 app.MapGet("/db-check", async (AppDbContext db) =>
