@@ -11,19 +11,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddCors(options =>
+builder.Services.AddCors(o =>
 {
-    options.AddPolicy("AllowWeb", policy => policy
-        .WithOrigins(
-            "https://abratsiuk.github.io",
-            "https://back-test-api.onrender.com",
-            "http://localhost:4200",
-            "http://0.0.0.0:10000",
-            "http://0.0.0.0:1000"
-        )
+    o.AddPolicy("AllowWeb", p => p
+        .AllowAnyOrigin()
         .AllowAnyHeader()
         .AllowAnyMethod());
 });
+
 
 
 
@@ -79,7 +74,7 @@ app.MapControllers();
 app.MapGet("/", () => Results.Text("OK")).WithName("Root");
 
 //the fastest check API:
-app.MapGet("/health", () => Results.Ok(new { status = "healthy 29102025 1638" }));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy 29102025 1700" }));
 
 //check that database is updated
 app.MapGet("/db-check", async (AppDbContext db) =>
@@ -87,7 +82,5 @@ app.MapGet("/db-check", async (AppDbContext db) =>
     var canConnect = await db.Database.CanConnectAsync();
     return Results.Ok(new { db = canConnect });
 });
-
-app.MapMethods("{*path}", new[] { "OPTIONS" }, () => Results.Ok());
 
 app.Run();
