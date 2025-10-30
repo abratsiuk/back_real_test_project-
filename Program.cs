@@ -2,6 +2,7 @@ using back_test_project.Data;
 using back_test_project.Repositories;
 using back_test_project.Services;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,46 +23,66 @@ builder.Services.AddCors(o =>
 
 //builder.Services.AddDbContext<AppDbContext>(options =>
 //    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
-// Read connection from env (DATABASE_URL or ConnectionStrings__Default), normalize SSL for Render
-string? conn =
-    Environment.GetEnvironmentVariable("ConnectionStrings__Default")
-    ?? Environment.GetEnvironmentVariable("DATABASE_URL")
-    ?? builder.Configuration.GetConnectionString("Default");
 
-if (conn is null)
-    throw new InvalidOperationException("No DB connection string found (Default / DATABASE_URL).");
+// ---------- DB connection (Render + local) ----------
+string? rawConn =
+    Environment.GetEnvironmentVariable("ConnectionStrings__Default")  // Render (как у Вас)
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL")             // альтернатива
+    ?? builder.Configuration.GetConnectionString("Default");          // локально
 
-// If it's in postgres:// format (Render), convert to Npgsql standard and force SSL
-if (conn.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+if (string.IsNullOrWhiteSpace(rawConn))
+    throw new InvalidOperationException("No DB connection string found.");
+
+// Преобразуем к валидной Npgsql key=value строке
+string BuildConn(string input)
 {
-    // On Render, the PostgreSQL connection string usually arrives as: postgres://user:pass@host:port/db
-    var uri = new Uri(conn);
-    var userInfo = uri.UserInfo.Split(':', 2);
-    var npg = new Npgsql.NpgsqlConnectionStringBuilder
+    // URL-формат? (postgres://... или postgresql://...)
+    if (input.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+        input.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
     {
-        Host = uri.Host,
-        Port = uri.Port,
-        Username = userInfo[0],
-        Password = userInfo.Length > 1 ? userInfo[1] : "",
-        Database = uri.AbsolutePath.Trim('/'),
-        SslMode = Npgsql.SslMode.Require,
-        TrustServerCertificate = true
-    };
-    conn = npg.ToString();
-}
-else
-{
-    // Ensure SSL for plain Npgsql string on Render
-    var b = new Npgsql.NpgsqlConnectionStringBuilder(conn);
-    if (b.SslMode == Npgsql.SslMode.Disable)
-    {
-        b.SslMode = Npgsql.SslMode.Require;
-        b.TrustServerCertificate = true;
+        var uri = new Uri(input);
+        var ui = uri.UserInfo.Split(':', 2);
+        var user = Uri.UnescapeDataString(ui[0]);
+        var pass = ui.Length > 1 ? Uri.UnescapeDataString(ui[1]) : "";
+
+        var b = new NpgsqlConnectionStringBuilder
+        {
+            Host = uri.Host,
+            Port = uri.IsDefaultPort ? 5432 : uri.Port,
+            Database = uri.AbsolutePath.Trim('/'),
+            Username = user,
+            Password = pass,
+            SslMode = SslMode.Require,
+            TrustServerCertificate = true
+        };
+        return b.ToString();
     }
-    conn = b.ToString();
+
+    // key=value формат (локально)
+    if (input.Contains("="))
+    {
+        var b = new NpgsqlConnectionStringBuilder(input);
+        if (b.SslMode == SslMode.Disable)
+        {
+            // локально можно оставить Disable; на всякий случай не ломаем,
+            // но если нужно принудить SSL, раскомментируйте:
+            // b.SslMode = SslMode.Require;
+            // b.TrustServerCertificate = true;
+        }
+        return b.ToString();
+    }
+
+    throw new ArgumentException("Unrecognized DB connection string format.");
 }
 
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(conn));
+var finalConn = BuildConn(rawConn);
+
+// (опционально) короткий лог — без пароля
+var masked = finalConn.Replace($"Password={new NpgsqlConnectionStringBuilder(finalConn).Password}", "Password=***");
+Console.WriteLine($"[DB] Using connection: {masked}");
+
+builder.Services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(finalConn));
+
 
 
 
