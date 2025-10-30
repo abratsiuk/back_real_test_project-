@@ -20,10 +20,50 @@ builder.Services.AddCors(o =>
 });
 
 
+//builder.Services.AddDbContext<AppDbContext>(options =>
+//    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+// Read connection from env (DATABASE_URL or ConnectionStrings__Default), normalize SSL for Render
+string? conn =
+    Environment.GetEnvironmentVariable("ConnectionStrings__Default")
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? builder.Configuration.GetConnectionString("Default");
+
+if (conn is null)
+    throw new InvalidOperationException("No DB connection string found (Default / DATABASE_URL).");
+
+// If it's in postgres:// format (Render), convert to Npgsql standard and force SSL
+if (conn.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+{
+    // On Render, the PostgreSQL connection string usually arrives as: postgres://user:pass@host:port/db
+    var uri = new Uri(conn);
+    var userInfo = uri.UserInfo.Split(':', 2);
+    var npg = new Npgsql.NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.Port,
+        Username = userInfo[0],
+        Password = userInfo.Length > 1 ? userInfo[1] : "",
+        Database = uri.AbsolutePath.Trim('/'),
+        SslMode = Npgsql.SslMode.Require,
+        TrustServerCertificate = true
+    };
+    conn = npg.ToString();
+}
+else
+{
+    // Ensure SSL for plain Npgsql string on Render
+    var b = new Npgsql.NpgsqlConnectionStringBuilder(conn);
+    if (b.SslMode == Npgsql.SslMode.Disable)
+    {
+        b.SslMode = Npgsql.SslMode.Require;
+        b.TrustServerCertificate = true;
+    }
+    conn = b.ToString();
+}
+
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(conn));
 
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
