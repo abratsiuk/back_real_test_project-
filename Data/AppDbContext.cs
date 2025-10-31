@@ -9,6 +9,7 @@ namespace back_test_project.Data
 
         public DbSet<Department> Departments => Set<Department>();
         public DbSet<Employee> Employees => Set<Employee>();
+        public DbSet<Book> Books => Set<Book>();
 
         protected override void OnModelCreating(ModelBuilder b)
         {
@@ -48,6 +49,122 @@ namespace back_test_project.Data
                 //});
 
             });
+            b.Entity<Book>(e =>
+            {
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.Title).IsRequired().HasMaxLength(300);
+                e.Property(x => x.Authors).IsRequired().HasMaxLength(400);
+
+                // Description is optional long text
+                e.Property(x => x.Description).HasMaxLength(4000);
+
+                // Basic index for search/sort; keep unique only on (Title, Authors)
+                e.HasIndex(x => new { x.Title, x.Authors }).IsUnique();
+            });
+
+            b.Entity<Book>().HasData(
+    new Book { Id = 1, Title = "Moby-Dick", Authors = "Herman Melville", PublicationYear = 1851, Description = null },
+    new Book { Id = 2, Title = "The Adventures of Huckleberry Finn", Authors = "Mark Twain", PublicationYear = 1884, Description = null },
+    new Book { Id = 3, Title = "The Great Gatsby", Authors = "F. Scott Fitzgerald", PublicationYear = 1925, Description = null },
+    new Book { Id = 4, Title = "To Kill a Mockingbird", Authors = "Harper Lee", PublicationYear = 1960, Description = null },
+    new Book { Id = 5, Title = "The Catcher in the Rye", Authors = "J. D. Salinger", PublicationYear = 1951, Description = null },
+    new Book { Id = 6, Title = "The Grapes of Wrath", Authors = "John Steinbeck", PublicationYear = 1939, Description = null },
+    new Book { Id = 7, Title = "The Sound and the Fury", Authors = "William Faulkner", PublicationYear = 1929, Description = null },
+    new Book { Id = 8, Title = "Beloved", Authors = "Toni Morrison", PublicationYear = 1987, Description = null },
+    new Book { Id = 9, Title = "Invisible Man", Authors = "Ralph Ellison", PublicationYear = 1952, Description = null },
+    new Book { Id = 10, Title = "Fahrenheit 451", Authors = "Ray Bradbury", PublicationYear = 1953, Description = null },
+    new Book { Id = 11, Title = "Slaughterhouse-Five", Authors = "Kurt Vonnegut", PublicationYear = 1969, Description = null },
+    new Book { Id = 12, Title = "On the Road", Authors = "Jack Kerouac", PublicationYear = 1957, Description = null },
+    new Book { Id = 13, Title = "The Old Man and the Sea", Authors = "Ernest Hemingway", PublicationYear = 1952, Description = null },
+    new Book { Id = 14, Title = "East of Eden", Authors = "John Steinbeck", PublicationYear = 1952, Description = null },
+    new Book { Id = 15, Title = "Of Mice and Men", Authors = "John Steinbeck", PublicationYear = 1937, Description = null },
+    new Book { Id = 16, Title = "Their Eyes Were Watching God", Authors = "Zora Neale Hurston", PublicationYear = 1937, Description = null },
+    new Book { Id = 17, Title = "The Color Purple", Authors = "Alice Walker", PublicationYear = 1982, Description = null },
+    new Book { Id = 18, Title = "The Scarlet Letter", Authors = "Nathaniel Hawthorne", PublicationYear = 1850, Description = null },
+    new Book { Id = 19, Title = "Little Women", Authors = "Louisa May Alcott", PublicationYear = 1868, Description = null },
+    new Book { Id = 20, Title = "Uncle Tom's Cabin", Authors = "Harriet Beecher Stowe", PublicationYear = 1852, Description = null },
+    new Book { Id = 21, Title = "Leaves of Grass", Authors = "Walt Whitman", PublicationYear = 1855, Description = null },
+    new Book { Id = 22, Title = "The Sun Also Rises", Authors = "Ernest Hemingway", PublicationYear = 1926, Description = null },
+    new Book { Id = 23, Title = "As I Lay Dying", Authors = "William Faulkner", PublicationYear = 1930, Description = null },
+    new Book { Id = 24, Title = "Blood Meridian", Authors = "Cormac McCarthy", PublicationYear = 1985, Description = null },
+    new Book { Id = 25, Title = "The Road", Authors = "Cormac McCarthy", PublicationYear = 2006, Description = null },
+    new Book { Id = 26, Title = "The Corrections", Authors = "Jonathan Franzen", PublicationYear = 2001, Description = null },
+    new Book { Id = 27, Title = "The Goldfinch", Authors = "Donna Tartt", PublicationYear = 2013, Description = null },
+    new Book { Id = 28, Title = "The Underground Railroad", Authors = "Colson Whitehead", PublicationYear = 2016, Description = null },
+    new Book { Id = 29, Title = "The Nickel Boys", Authors = "Colson Whitehead", PublicationYear = 2019, Description = null },
+    new Book { Id = 30, Title = "White Noise", Authors = "Don DeLillo", PublicationYear = 1985, Description = null },
+    new Book { Id = 31, Title = "Infinite Jest", Authors = "David Foster Wallace", PublicationYear = 1996, Description = null },
+    new Book { Id = 32, Title = "Catch-22", Authors = "Joseph Heller", PublicationYear = 1961, Description = null },
+    new Book { Id = 33, Title = "One Flew Over the Cuckoo's Nest", Authors = "Ken Kesey", PublicationYear = 1962, Description = null },
+    new Book { Id = 34, Title = "The Call of the Wild", Authors = "Jack London", PublicationYear = 1903, Description = null },
+    new Book { Id = 35, Title = "White Fang", Authors = "Jack London", PublicationYear = 1906, Description = null },
+    new Book { Id = 36, Title = "The House of Mirth", Authors = "Edith Wharton", PublicationYear = 1905, Description = null },
+    new Book { Id = 37, Title = "The Age of Innocence", Authors = "Edith Wharton", PublicationYear = 1920, Description = null },
+    new Book { Id = 38, Title = "The Jungle", Authors = "Upton Sinclair", PublicationYear = 1906, Description = null },
+    new Book { Id = 39, Title = "The Bell Jar", Authors = "Sylvia Plath", PublicationYear = 1963, Description = null },
+    new Book { Id = 40, Title = "American Pastoral", Authors = "Philip Roth", PublicationYear = 1997, Description = null },
+    new Book { Id = 41, Title = "Portnoy's Complaint", Authors = "Philip Roth", PublicationYear = 1969, Description = null },
+    new Book { Id = 42, Title = "The Left Hand of Darkness", Authors = "Ursula K. Le Guin", PublicationYear = 1969, Description = null },
+    new Book { Id = 43, Title = "Dune", Authors = "Frank Herbert", PublicationYear = 1965, Description = null },
+    new Book { Id = 44, Title = "Foundation", Authors = "Isaac Asimov", PublicationYear = 1951, Description = null },
+    new Book { Id = 45, Title = "Foundation and Empire", Authors = "Isaac Asimov", PublicationYear = 1952, Description = null },
+    new Book { Id = 46, Title = "Second Foundation", Authors = "Isaac Asimov", PublicationYear = 1953, Description = null },
+    new Book { Id = 47, Title = "The Amazing Adventures of Kavalier & Clay", Authors = "Michael Chabon", PublicationYear = 2000, Description = null },
+    new Book { Id = 48, Title = "The Yiddish Policemen's Union", Authors = "Michael Chabon", PublicationYear = 2007, Description = null },
+    new Book { Id = 49, Title = "The Poisonwood Bible", Authors = "Barbara Kingsolver", PublicationYear = 1998, Description = null },
+    new Book { Id = 50, Title = "A Tree Grows in Brooklyn", Authors = "Betty Smith", PublicationYear = 1943, Description = null },
+    new Book { Id = 51, Title = "Gone with the Wind", Authors = "Margaret Mitchell", PublicationYear = 1936, Description = null },
+    new Book { Id = 52, Title = "The Outsiders", Authors = "S. E. Hinton", PublicationYear = 1967, Description = null },
+    new Book { Id = 53, Title = "The Giver", Authors = "Lois Lowry", PublicationYear = 1993, Description = null },
+    new Book { Id = 54, Title = "The Things They Carried", Authors = "Tim O'Brien", PublicationYear = 1990, Description = null },
+    new Book { Id = 55, Title = "Native Son", Authors = "Richard Wright", PublicationYear = 1940, Description = null },
+    new Book { Id = 56, Title = "The Autobiography of Malcolm X", Authors = "Malcolm X; Alex Haley", PublicationYear = 1965, Description = null },
+    new Book { Id = 57, Title = "The Souls of Black Folk", Authors = "W. E. B. Du Bois", PublicationYear = 1903, Description = null },
+    new Book { Id = 58, Title = "The Adventures of Tom Sawyer", Authors = "Mark Twain", PublicationYear = 1876, Description = null },
+    new Book { Id = 59, Title = "The Martian Chronicles", Authors = "Ray Bradbury", PublicationYear = 1950, Description = null },
+    new Book { Id = 60, Title = "The Stand", Authors = "Stephen King", PublicationYear = 1978, Description = null },
+    new Book { Id = 61, Title = "It", Authors = "Stephen King", PublicationYear = 1986, Description = null },
+    new Book { Id = 62, Title = "The Shining", Authors = "Stephen King", PublicationYear = 1977, Description = null },
+    new Book { Id = 63, Title = "Lolita", Authors = "Vladimir Nabokov", PublicationYear = 1955, Description = null },
+    new Book { Id = 64, Title = "The Crying of Lot 49", Authors = "Thomas Pynchon", PublicationYear = 1966, Description = null },
+    new Book { Id = 65, Title = "Gravity's Rainbow", Authors = "Thomas Pynchon", PublicationYear = 1973, Description = null },
+    new Book { Id = 66, Title = "The Bonfire of the Vanities", Authors = "Tom Wolfe", PublicationYear = 1987, Description = null },
+    new Book { Id = 67, Title = "The Right Stuff", Authors = "Tom Wolfe", PublicationYear = 1979, Description = null },
+    new Book { Id = 68, Title = "A Confederacy of Dunces", Authors = "John Kennedy Toole", PublicationYear = 1980, Description = null },
+    new Book { Id = 69, Title = "The Brief Wondrous Life of Oscar Wao", Authors = "Junot Díaz", PublicationYear = 2007, Description = null },
+    new Book { Id = 70, Title = "The Joy Luck Club", Authors = "Amy Tan", PublicationYear = 1989, Description = null },
+    new Book { Id = 71, Title = "The House on Mango Street", Authors = "Sandra Cisneros", PublicationYear = 1984, Description = null },
+    new Book { Id = 72, Title = "The Color of Water", Authors = "James McBride", PublicationYear = 1995, Description = null },
+    new Book { Id = 73, Title = "The Secret History", Authors = "Donna Tartt", PublicationYear = 1992, Description = null },
+    new Book { Id = 74, Title = "The Lovely Bones", Authors = "Alice Sebold", PublicationYear = 2002, Description = null },
+    new Book { Id = 75, Title = "The Devil in the White City", Authors = "Erik Larson", PublicationYear = 2003, Description = null },
+    new Book { Id = 76, Title = "The Hunger Games", Authors = "Suzanne Collins", PublicationYear = 2008, Description = null },
+    new Book { Id = 77, Title = "The Fault in Our Stars", Authors = "John Green", PublicationYear = 2012, Description = null },
+    new Book { Id = 78, Title = "The Glass Castle", Authors = "Jeannette Walls", PublicationYear = 2005, Description = null },
+    new Book { Id = 79, Title = "The Help", Authors = "Kathryn Stockett", PublicationYear = 2009, Description = null },
+    new Book { Id = 80, Title = "No Country for Old Men", Authors = "Cormac McCarthy", PublicationYear = 2005, Description = null },
+    new Book { Id = 81, Title = "The Bluest Eye", Authors = "Toni Morrison", PublicationYear = 1970, Description = null },
+    new Book { Id = 82, Title = "Song of Solomon", Authors = "Toni Morrison", PublicationYear = 1977, Description = null },
+    new Book { Id = 83, Title = "The Namesake", Authors = "Jhumpa Lahiri", PublicationYear = 2003, Description = null },
+    new Book { Id = 84, Title = "Freedom", Authors = "Jonathan Franzen", PublicationYear = 2010, Description = null },
+    new Book { Id = 85, Title = "Housekeeping", Authors = "Marilynne Robinson", PublicationYear = 1980, Description = null },
+    new Book { Id = 86, Title = "Gilead", Authors = "Marilynne Robinson", PublicationYear = 2004, Description = null },
+    new Book { Id = 87, Title = "The Princess Bride", Authors = "William Goldman", PublicationYear = 1973, Description = null },
+    new Book { Id = 88, Title = "The Godfather", Authors = "Mario Puzo", PublicationYear = 1969, Description = null },
+    new Book { Id = 89, Title = "The Firm", Authors = "John Grisham", PublicationYear = 1991, Description = null },
+    new Book { Id = 90, Title = "The Da Vinci Code", Authors = "Dan Brown", PublicationYear = 2003, Description = null },
+    new Book { Id = 91, Title = "The House of the Seven Gables", Authors = "Nathaniel Hawthorne", PublicationYear = 1851, Description = null },
+    new Book { Id = 92, Title = "The Last of the Mohicans", Authors = "James Fenimore Cooper", PublicationYear = 1826, Description = null },
+    new Book { Id = 93, Title = "Babbitt", Authors = "Sinclair Lewis", PublicationYear = 1922, Description = null },
+    new Book { Id = 94, Title = "Main Street", Authors = "Sinclair Lewis", PublicationYear = 1920, Description = null },
+    new Book { Id = 95, Title = "The Red Badge of Courage", Authors = "Stephen Crane", PublicationYear = 1895, Description = null },
+    new Book { Id = 96, Title = "The Age of Anxiety", Authors = "W. H. Auden", PublicationYear = 1947, Description = null },
+    new Book { Id = 97, Title = "The House of the Spirits", Authors = "Isabel Allende", PublicationYear = 1982, Description = null },
+    new Book { Id = 98, Title = "The God of Small Things", Authors = "Arundhati Roy", PublicationYear = 1997, Description = null },
+    new Book { Id = 99, Title = "The Road Back", Authors = "Erich Maria Remarque", PublicationYear = 1931, Description = null },
+    new Book { Id = 100, Title = "The Plot Against America", Authors = "Philip Roth", PublicationYear = 2004, Description = null }
+);
 
             // ---- Seed data (5 departments, 10 employees) ----
             // Departments
