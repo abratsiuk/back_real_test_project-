@@ -10,6 +10,7 @@ namespace back_test_project.Data
         public DbSet<Department> Departments => Set<Department>();
         public DbSet<Employee> Employees => Set<Employee>();
         public DbSet<Book> Books => Set<Book>();
+        public DbSet<Cat> Cats => Set<Cat>();
 
         protected override void OnModelCreating(ModelBuilder b)
         {
@@ -61,6 +62,14 @@ namespace back_test_project.Data
 
                 // Basic index for search/sort; keep unique only on (Title, Authors)
                 e.HasIndex(x => new { x.Title, x.Authors }).IsUnique();
+            });
+
+            b.Entity<Cat>(e =>
+            {
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.Name).IsRequired().HasMaxLength(50);
+                e.Property(x => x.Age).IsRequired();
             });
 
             b.Entity<Book>().HasData(
@@ -401,6 +410,20 @@ namespace back_test_project.Data
     new Employee { Id = 200, FirstName = "Ja", LastName = "Morant", Salary = 5450m, DepartmentId = 5, ManagerId = 9 }
 
             );
+
+            b.Entity<Cat>().HasData(
+                    new Cat { Id = 1, Name = "Garfield", Age = 6 },
+                    new Cat { Id = 2, Name = "Tom", Age = 5 },
+                    new Cat { Id = 3, Name = "Sylvester", Age = 7 },
+                    new Cat { Id = 4, Name = "Cheshire", Age = 8 },
+                    new Cat { Id = 5, Name = "Simba", Age = 4 },
+                    new Cat { Id = 6, Name = "Nala", Age = 3 },
+                    new Cat { Id = 7, Name = "Puss in Boots", Age = 5 },
+                    new Cat { Id = 8, Name = "Felix", Age = 9 },
+                    new Cat { Id = 9, Name = "Salem", Age = 10 },
+                    new Cat { Id = 10, Name = "Snowball", Age = 2 }
+                );
+
         }
     }
 }
