@@ -95,6 +95,7 @@ builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<IBookService, BookService>();
 
+builder.Services.AddScoped<ICatRepository, CatRepository>();
 builder.Services.AddScoped<ICatService, CatService>();
 
 var port = Environment.GetEnvironmentVariable("PORT");

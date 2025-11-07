@@ -1,10 +1,13 @@
-﻿using back_test_project.Models;
+﻿using back_test_project.DTO;
 
 namespace back_test_project.Services
 {
     public interface ICatService
     {
-        Task<IEnumerable<Cat>> GetAllAsync(CancellationToken ct = default);
-        Task<Cat?> GetByIdAsync(int id, CancellationToken ct = default);
+        Task<IEnumerable<CatDataDto>> GetAllAsync(CancellationToken cancellationToken = default);
+        Task<CatDataDto?> GetReadOnlyByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<int> CreateAsync(CatCreateDto dto, CancellationToken cancellationToken = default);
+        Task<bool> UpdateAsync(int id, CatUpdateDto dto, CancellationToken cancellationToken = default);
+        Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
     }
 }
