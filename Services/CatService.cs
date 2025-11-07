@@ -146,5 +146,27 @@ namespace back_test_project.Services
 
             return true;
         }
+
+
+        public async Task<(IReadOnlyList<CatDataDto> Items, int Total)> GetPageAsync(
+            int page,
+            int pageSize,
+            string sort,
+            string order,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _repository.GetPageAsync(page, pageSize, sort, order, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Error while getting cats page. page={Page}, pageSize={PageSize}, sort={Sort}, order={Order}",
+                    page, pageSize, sort, order);
+                throw;
+            }
+        }
+
     }
 }

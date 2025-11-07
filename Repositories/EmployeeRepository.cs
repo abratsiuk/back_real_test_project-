@@ -117,7 +117,7 @@ namespace back_test_project.Repositories
               })
             .AsQueryable();
 
-            var total = await _db.Employees.CountAsync(ct);
+            var total = await baseQuery.CountAsync(ct);
 
             var sortKey = (sort ?? "lastName").Trim().ToLowerInvariant();
             var isAsc = string.Equals(order, "asc", StringComparison.OrdinalIgnoreCase);

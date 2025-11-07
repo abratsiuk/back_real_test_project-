@@ -54,5 +54,56 @@ namespace back_test_project.Repositories
         {
             await _db.SaveChangesAsync(cancellationToken);
         }
+
+        public async Task<(IReadOnlyList<CatDataDto> Items, int Total)> GetPageAsync(
+            int page,
+            int pageSize,
+            string sort,
+            string order,
+            CancellationToken cancellationToken = default)
+        {
+            var baseQuery = _db.Cats
+                .Select(c => new CatDataDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Age = c.Age
+                });
+
+            var total = await baseQuery.CountAsync(cancellationToken);
+
+            var safePage = page < 0 ? 0 : page;
+            var safePageSize = pageSize <= 0 ? 10 : pageSize;
+
+            var sortKey = (sort ?? "name").Trim().ToLowerInvariant();
+            var isAsc = string.Equals(order, "asc", StringComparison.OrdinalIgnoreCase);
+
+            IOrderedQueryable<CatDataDto> ordered = sortKey switch
+            {
+                "id" => isAsc
+                    ? baseQuery.OrderBy(x => x.Id)
+                    : baseQuery.OrderByDescending(x => x.Id),
+
+                "age" => isAsc
+                    ? baseQuery.OrderBy(x => x.Age)
+                    : baseQuery.OrderByDescending(x => x.Age),
+
+                "name" or _ => isAsc
+                    ? baseQuery.OrderBy(x => x.Name)
+                    : baseQuery.OrderByDescending(x => x.Name)
+            };
+
+            if (total == 0)
+            {
+                return (Array.Empty<CatDataDto>(), 0);
+            }
+
+            var items = await ordered
+                .Skip(safePage * safePageSize)
+                .Take(safePageSize)
+                .ToListAsync(cancellationToken);
+
+            return (items, total);
+        }
     }
 }
