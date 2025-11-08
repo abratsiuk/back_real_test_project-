@@ -1,6 +1,9 @@
 using back_test_project.Data;
 using back_test_project.Repositories;
 using back_test_project.Services;
+using back_test_project.Validation.Cats;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -20,6 +23,10 @@ builder.Services.AddCors(o =>
         .AllowAnyMethod());
 });
 
+builder.Services
+    .AddFluentValidationAutoValidation()
+    .AddFluentValidationClientsideAdapters();
+builder.Services.AddValidatorsFromAssemblyContaining<CatCreateDtoValidator>();
 
 //builder.Services.AddDbContext<AppDbContext>(options =>
 //    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));

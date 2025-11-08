@@ -20,5 +20,13 @@ namespace back_test_project.Repositories
                 .OrderBy(d => d.DepartmentName)
                 .ToListAsync(ct);
         }
+
+        public async Task<string?> GetNameByIdAsync(int id, CancellationToken ct = default)
+        {
+            return await _db.Departments
+                .Where(d => d.Id == id)
+                .Select(d => d.DepartmentName)
+                .FirstOrDefaultAsync(ct);
+        }
     }
 }

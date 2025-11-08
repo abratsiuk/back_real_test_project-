@@ -40,20 +40,19 @@ namespace back_test_project.Controllers
         [HttpGet("{id:int}")]
         public async Task<ActionResult<CatDataDto>> GetById(int id, CancellationToken ct = default)
         {
-            var cat = await _service.GetReadOnlyByIdAsync(id, ct);
-            if (cat == null)
+            var item = await _service.GetReadOnlyByIdAsync(id, ct);
+            if (item == null)
             {
                 return NotFound($"Cat with id {id} not found");
             }
-            return Ok(cat);
+            return Ok(item);
         }
 
         [HttpPost]
         public async Task<ActionResult<int>> Create([FromBody] CatCreateDto dto, CancellationToken ct = default)
         {
-            var newCatId = await _service.CreateAsync(dto, ct);
-            var result = new CatDataDto { Id = newCatId, Name = dto.Name, Age = dto.Age };
-            return CreatedAtAction(nameof(GetById), new { id = newCatId }, result);
+            var result = await _service.CreateAsync(dto, ct);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
         [HttpPut("{id:int}")]

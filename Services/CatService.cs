@@ -42,34 +42,15 @@ namespace back_test_project.Services
             }
         }
 
-        public async Task<int> CreateAsync(CatCreateDto dto, CancellationToken cancellationToken = default)
+        public async Task<CatDataDto> CreateAsync(CatCreateDto dto, CancellationToken cancellationToken = default)
         {
-            if (dto == null)
-            {
-                throw new ArgumentNullException(nameof(dto), "CatCreateDto cannot be null.");
-            }
-            if (string.IsNullOrWhiteSpace(dto.Name))
-            {
-                throw new ArgumentException("Cat name cannot be null or empty.", nameof(dto.Name));
-            }
-            if (dto.Name.Trim().Length > 50)
-            {
-                throw new ArgumentException("Cat name cannot exceed 50 characters.", nameof(dto.Name));
-            }
-            if (dto.Age < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(dto.Age), "Cat age cannot be negative.");
-            }
-            if (dto.Age > 100)
-            {
-                throw new ArgumentOutOfRangeException(nameof(dto.Age), "Cat age cannot be greater than 100.");
-            }
-
             var entity = new Cat { Name = dto.Name.Trim(), Age = dto.Age };
 
             try
             {
-                return await _repository.AddAsync(entity, cancellationToken);
+                var newId = await _repository.CreateAsync(entity, cancellationToken);
+                var result = new CatDataDto { Id = newId, Name = entity.Name, Age = entity.Age };
+                return result;
             }
             catch (DbUpdateException dbUpdateException)
             {
@@ -106,27 +87,6 @@ namespace back_test_project.Services
 
         public async Task<bool> UpdateAsync(int id, CatUpdateDto dto, CancellationToken cancellationToken = default)
         {
-            if (dto == null)
-            {
-                throw new ArgumentNullException(nameof(dto), "CatUpdateDto cannot be null.");
-            }
-            if (string.IsNullOrWhiteSpace(dto.Name))
-            {
-                throw new ArgumentException("Cat name cannot be null or empty.", nameof(dto.Name));
-            }
-            if (dto.Name.Trim().Length > 50)
-            {
-                throw new ArgumentException("Cat name cannot exceed 50 characters.", nameof(dto.Name));
-            }
-            if (dto.Age < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(dto.Age), "Cat age cannot be negative.");
-            }
-            if (dto.Age > 100)
-            {
-                throw new ArgumentOutOfRangeException(nameof(dto.Age), "Cat age cannot be greater than 100.");
-            }
-
             var entity = await _repository.GetByIdAsync(id, cancellationToken);
             if (entity == null)
             {

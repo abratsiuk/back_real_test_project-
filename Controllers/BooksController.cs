@@ -48,44 +48,30 @@ namespace back_test_project.Controllers
         [HttpPost]
         public async Task<ActionResult<int>> Create([FromBody] BookCreateDto dto, CancellationToken ct)
         {
-            var newId = await _service.CreateAsync(dto, ct);
-            return CreatedAtAction(nameof(GetById), new { id = newId }, newId);
+            var result = await _service.CreateAsync(dto, ct);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] BookUpdateDto dto, CancellationToken ct)
         {
-            try
+            var updated = await _service.UpdateAsync(id, dto, ct);
+            if (!updated)
             {
-                await _service.UpdateAsync(id, dto, ct);
-                return NoContent();
+                return NotFound($"Book with id {id} not found or update failed");
             }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new { message = ex.Message });
-            }
+            return NoContent();
         }
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
-            try
+            var deleted = await _service.DeleteAsync(id, ct);
+            if (!deleted)
             {
-                await _service.DeleteAsync(id, ct);
-                return NoContent();
+                return NotFound($"Book with id {id} not found or delete failed");
             }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new { message = ex.Message });
-            }
+            return NoContent();
         }
 
         [HttpGet("{id:int}/can-delete")]

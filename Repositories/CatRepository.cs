@@ -36,7 +36,7 @@ namespace back_test_project.Repositories
                 .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
         }
 
-        public async Task<int> AddAsync(Cat entity, CancellationToken cancellationToken = default)
+        public async Task<int> CreateAsync(Cat entity, CancellationToken cancellationToken = default)
         {
             await _db.Cats.AddAsync(entity, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);

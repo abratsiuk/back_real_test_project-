@@ -60,6 +60,14 @@ namespace back_test_project.Repositories
         public Task<Employee?> GetByIdAsync(int id, CancellationToken ct = default)
             => _db.Employees.FirstOrDefaultAsync(e => e.Id == id, ct);
 
+        public async Task<string?> GetNameByIdAsync(int id, CancellationToken ct = default)
+        {
+            return await _db.Employees
+                .Where(e => e.Id == id)
+                .Select(e => e.FirstName + " " + e.LastName)
+                .FirstOrDefaultAsync(ct);
+        }
+
         public async Task<int> CreateAsync(EmployeeCreateDto dto, CancellationToken ct = default)
         {
             var entity = new Employee
