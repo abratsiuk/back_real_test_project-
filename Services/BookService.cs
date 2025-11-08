@@ -27,19 +27,6 @@ namespace back_test_project.Services
             }
         }
 
-        public async Task<IReadOnlyList<BookOptionDto>> GetOptionsAsync(CancellationToken ct = default)
-        {
-            try
-            {
-                return await _repository.GetOptionsAsync(ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching book options.");
-                throw;
-            }
-        }
-
         public async Task<BookReadDto?> GetReadonlyByIdAsync(int id, CancellationToken ct = default)
         {
             try
@@ -138,13 +125,5 @@ namespace back_test_project.Services
             }
         }
 
-        public async Task<BookCanDeleteDto> CanDeleteAsync(int id, CancellationToken ct = default)
-        {
-            var exists = await _repository.ExistsAsync(id, ct);
-            if (!exists) return new BookCanDeleteDto { CanDelete = false, Reason = "Book not found." };
-
-            // No special constraints for books now.
-            return new BookCanDeleteDto { CanDelete = true };
-        }
     }
 }

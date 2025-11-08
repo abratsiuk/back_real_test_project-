@@ -6,6 +6,5 @@ namespace back_test_project.Repositories
     {
         Task<IReadOnlyList<DepartmentDto>> GetAllAsync(CancellationToken cancellationToken = default);
 
-        Task<string?> GetNameByIdAsync(int id, CancellationToken cancellationToken = default);
     }
 }

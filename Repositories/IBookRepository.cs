@@ -7,8 +7,6 @@ namespace back_test_project.Repositories
     {
         Task<IReadOnlyList<BookDataDto>> GetAllDataAsync(CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<BookOptionDto>> GetOptionsAsync(CancellationToken cancellationToken = default);
-
         Task<BookReadDto?> GetReadonlyByIdAsync(int id, CancellationToken cancellationToken = default);
 
         Task<Book?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
@@ -18,8 +16,6 @@ namespace back_test_project.Repositories
         Task UpdateAsync(Book entity, BookUpdateDto dto, CancellationToken cancellationToken = default);
 
         Task DeleteAsync(Book entity, CancellationToken cancellationToken = default);
-
-        Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default);
 
         Task<(IReadOnlyList<BookDataDto> Items, int Total)> GetPageAsync(
             int page, int pageSize, string sort, string order, CancellationToken cancellationToken = default);

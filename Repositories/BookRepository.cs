@@ -24,18 +24,6 @@ namespace back_test_project.Repositories
                 .ToListAsync(ct);
         }
 
-        public async Task<IReadOnlyList<BookOptionDto>> GetOptionsAsync(CancellationToken cancellationToken = default)
-        {
-            return await _db.Books
-                .Select(b => new BookOptionDto
-                {
-                    Id = b.Id,
-                    Title = b.Title
-                })
-                .OrderBy(x => x.Title)
-                .ToListAsync(cancellationToken);
-        }
-
         public async Task<BookReadDto?> GetReadonlyByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _db.Books
@@ -84,9 +72,6 @@ namespace back_test_project.Repositories
             _db.Books.Remove(entity);
             await _db.SaveChangesAsync(cancellationToken);
         }
-
-        public Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
-            => _db.Books.AnyAsync(b => b.Id == id, cancellationToken);
 
         public async Task<(IReadOnlyList<BookDataDto> Items, int Total)> GetPageAsync(
             int page, int pageSize, string sort, string order, CancellationToken cancellationToken = default)

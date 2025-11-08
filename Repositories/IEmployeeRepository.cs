@@ -12,7 +12,6 @@ namespace back_test_project.Repositories
         Task<EmployeeReadDto?> GetReadonlyByIdAsync(int id, CancellationToken cancellationToken = default);
 
         Task<Employee?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-        Task<string?> GetNameByIdAsync(int id, CancellationToken cancellationToken = default);
 
         Task<int> CreateAsync(EmployeeCreateDto dto, CancellationToken cancellationToken = default);
 

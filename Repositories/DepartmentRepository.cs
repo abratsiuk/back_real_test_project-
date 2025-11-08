@@ -21,12 +21,5 @@ namespace back_test_project.Repositories
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<string?> GetNameByIdAsync(int id, CancellationToken cancellationToken = default)
-        {
-            return await _db.Departments
-                .Where(d => d.Id == id)
-                .Select(d => d.DepartmentName)
-                .FirstOrDefaultAsync(cancellationToken);
-        }
     }
 }

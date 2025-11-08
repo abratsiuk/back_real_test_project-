@@ -30,13 +30,6 @@ namespace back_test_project.Controllers
             return Ok(new PagedResultDto<BookDataDto> { Data = items, TotalCount = total });
         }
 
-        [HttpGet("options")]
-        public async Task<ActionResult<IReadOnlyList<BookOptionDto>>> GetOptions(CancellationToken ct)
-        {
-            var items = await _service.GetOptionsAsync(ct);
-            return Ok(items);
-        }
-
         [HttpGet("{id:int}")]
         public async Task<ActionResult<BookReadDto>> GetById(int id, CancellationToken ct)
         {
@@ -74,11 +67,5 @@ namespace back_test_project.Controllers
             return NoContent();
         }
 
-        [HttpGet("{id:int}/can-delete")]
-        public async Task<ActionResult<BookCanDeleteDto>> CanDelete(int id, CancellationToken ct)
-        {
-            var result = await _service.CanDeleteAsync(id, ct);
-            return Ok(result);
-        }
     }
 }
