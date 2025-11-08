@@ -8,13 +8,12 @@ namespace back_test_project.Repositories
         Task<IEnumerable<CatDataDto>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<CatDataDto?> GetReadOnlyByIdAsync(int id, CancellationToken cancellationToken = default);
         Task<Cat?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-        Task<int> CreateAsync(Cat entity, CancellationToken cancellationToken = default);
-        Task UpdateAsync(Cat entity, CancellationToken cancellationToken = default);
-        Task DeleteAsync(Cat entity, CancellationToken cancellationToken = default);
+        Task CreateAsync(Cat entity, CancellationToken cancellationToken = default);
+        void Remove(Cat entity);
+        Task SaveChangesAsync(CancellationToken cancellationToken = default);
 
         Task<(IReadOnlyList<CatDataDto> Items, int Total)> GetPageAsync(
             CatPageQueryDto query,
             CancellationToken cancellationToken = default);
-
     }
 }

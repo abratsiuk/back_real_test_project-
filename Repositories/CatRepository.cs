@@ -36,21 +36,17 @@ namespace back_test_project.Repositories
                 .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
         }
 
-        public async Task<int> CreateAsync(Cat entity, CancellationToken cancellationToken = default)
+        public async Task CreateAsync(Cat entity, CancellationToken cancellationToken = default)
         {
             await _db.Cats.AddAsync(entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
-            return entity.Id;
         }
 
-        public async Task DeleteAsync(Cat entity, CancellationToken cancellationToken = default)
+        public void Remove(Cat entity)
         {
             _db.Cats.Remove(entity);
-            await _db.SaveChangesAsync(cancellationToken);
         }
 
-
-        public async Task UpdateAsync(Cat entity, CancellationToken cancellationToken = default)
+        public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             await _db.SaveChangesAsync(cancellationToken);
         }

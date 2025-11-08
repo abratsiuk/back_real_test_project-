@@ -48,8 +48,11 @@ namespace back_test_project.Services
 
             try
             {
-                var newId = await _repository.CreateAsync(entity, cancellationToken);
-                var result = new CatDataDto { Id = newId, Name = entity.Name, Age = entity.Age };
+                await _repository.CreateAsync(entity, cancellationToken);
+                await _repository.SaveChangesAsync(cancellationToken);
+                var newId = entity.Id;
+
+                var result = new CatDataDto { Id = newId, Name = dto.Name, Age = dto.Age };
                 return result;
             }
             catch (DbUpdateException dbUpdateException)
@@ -62,27 +65,6 @@ namespace back_test_project.Services
                 _logger.LogError(ex, "Unexpected error while creating new Cat with Name {Name}", dto.Name);
                 throw;
             }
-        }
-
-        public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
-        {
-            var entity = await _repository.GetByIdAsync(id, cancellationToken);
-            if (entity == null) { return false; }
-            try
-            {
-                await _repository.DeleteAsync(entity, cancellationToken);
-            }
-            catch (DbUpdateException dbUpdateException)
-            {
-                _logger.LogError(dbUpdateException, "Error deleting Cat with Id {Id}", id);
-                return false;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error while deleting Cat with Id {Id}", id);
-                throw;
-            }
-            return true;
         }
 
         public async Task<bool> UpdateAsync(int id, CatUpdateDto dto, CancellationToken cancellationToken = default)
@@ -99,7 +81,7 @@ namespace back_test_project.Services
 
             try
             {
-                await _repository.UpdateAsync(entity, cancellationToken);
+                await _repository.SaveChangesAsync(cancellationToken);
             }
             catch (DbUpdateException dbUpdateException)
             {
@@ -115,6 +97,27 @@ namespace back_test_project.Services
             return true;
         }
 
+        public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var entity = await _repository.GetByIdAsync(id, cancellationToken);
+            if (entity == null) { return false; }
+            try
+            {
+                _repository.Remove(entity);
+                await _repository.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException dbUpdateException)
+            {
+                _logger.LogError(dbUpdateException, "Error deleting Cat with Id {Id}", id);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while deleting Cat with Id {Id}", id);
+                throw;
+            }
+            return true;
+        }
 
         public async Task<(IReadOnlyList<CatDataDto> Items, int Total)> GetPageAsync(
             CatPageQueryDto query,

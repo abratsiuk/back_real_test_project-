@@ -49,7 +49,7 @@ namespace back_test_project.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<int>> Create([FromBody] CatCreateDto dto, CancellationToken ct = default)
+        public async Task<ActionResult<CatDataDto>> Create([FromBody] CatCreateDto dto, CancellationToken ct = default)
         {
             var result = await _service.CreateAsync(dto, ct);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
