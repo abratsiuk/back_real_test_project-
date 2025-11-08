@@ -5,23 +5,23 @@ namespace back_test_project.Repositories
 {
     public interface IBookRepository
     {
-        Task<IReadOnlyList<BookDataDto>> GetAllDataAsync(CancellationToken ct = default);
+        Task<IReadOnlyList<BookDataDto>> GetAllDataAsync(CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<BookOptionDto>> GetOptionsAsync(CancellationToken ct = default);
+        Task<IReadOnlyList<BookOptionDto>> GetOptionsAsync(CancellationToken cancellationToken = default);
 
-        Task<BookReadDto?> GetReadonlyByIdAsync(int id, CancellationToken ct = default);
+        Task<BookReadDto?> GetReadonlyByIdAsync(int id, CancellationToken cancellationToken = default);
 
-        Task<Book?> GetByIdAsync(int id, CancellationToken ct = default);
+        Task<Book?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
-        Task<int> CreateAsync(BookCreateDto dto, CancellationToken ct = default);
+        Task<int> CreateAsync(BookCreateDto dto, CancellationToken cancellationToken = default);
 
-        Task UpdateAsync(Book entity, BookUpdateDto dto, CancellationToken ct = default);
+        Task UpdateAsync(Book entity, BookUpdateDto dto, CancellationToken cancellationToken = default);
 
-        Task DeleteAsync(Book entity, CancellationToken ct = default);
+        Task DeleteAsync(Book entity, CancellationToken cancellationToken = default);
 
-        Task<bool> ExistsAsync(int id, CancellationToken ct);
+        Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default);
 
         Task<(IReadOnlyList<BookDataDto> Items, int Total)> GetPageAsync(
-            int page, int pageSize, string sort, string order, CancellationToken ct = default);
+            int page, int pageSize, string sort, string order, CancellationToken cancellationToken = default);
     }
 }

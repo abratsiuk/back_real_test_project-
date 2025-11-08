@@ -10,7 +10,7 @@ namespace back_test_project.Repositories
         private readonly AppDbContext _db;
         public EmployeeRepository(AppDbContext db) => _db = db;
 
-        public async Task<IReadOnlyList<EmployeeDataDto>> GetAllDataAsync(CancellationToken ct = default)
+        public async Task<IReadOnlyList<EmployeeDataDto>> GetAllDataAsync(CancellationToken cancellationToken = default)
         {
             return await _db.Employees
                 .Select(e => new EmployeeDataDto
@@ -25,10 +25,10 @@ namespace back_test_project.Repositories
                     Salary = e.Salary
                 })
                 .OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
-                .ToListAsync(ct);
+                .ToListAsync(cancellationToken);
         }
 
-        public async Task<IReadOnlyList<EmployeeOptionDto>> GetOptionsAsync(CancellationToken ct = default)
+        public async Task<IReadOnlyList<EmployeeOptionDto>> GetOptionsAsync(CancellationToken cancellationToken = default)
         {
             return await _db.Employees
                 .Select(e => new EmployeeOptionDto
@@ -37,10 +37,10 @@ namespace back_test_project.Repositories
                     FullName = e.FirstName + " " + e.LastName
                 })
                 .OrderBy(x => x.FullName)
-                .ToListAsync(ct);
+                .ToListAsync(cancellationToken);
         }
 
-        public async Task<EmployeeReadDto?> GetReadonlyByIdAsync(int id, CancellationToken ct = default)
+        public async Task<EmployeeReadDto?> GetReadonlyByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _db.Employees
                 .Where(e => e.Id == id)
@@ -53,22 +53,22 @@ namespace back_test_project.Repositories
                     DepartmentId = e.DepartmentId,
                     ManagerId = e.ManagerId
                 })
-                .FirstOrDefaultAsync(ct);
+                .FirstOrDefaultAsync(cancellationToken);
         }
 
         //With tracking!
-        public Task<Employee?> GetByIdAsync(int id, CancellationToken ct = default)
-            => _db.Employees.FirstOrDefaultAsync(e => e.Id == id, ct);
+        public Task<Employee?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+            => _db.Employees.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
-        public async Task<string?> GetNameByIdAsync(int id, CancellationToken ct = default)
+        public async Task<string?> GetNameByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _db.Employees
                 .Where(e => e.Id == id)
                 .Select(e => e.FirstName + " " + e.LastName)
-                .FirstOrDefaultAsync(ct);
+                .FirstOrDefaultAsync(cancellationToken);
         }
 
-        public async Task<int> CreateAsync(EmployeeCreateDto dto, CancellationToken ct = default)
+        public async Task<int> CreateAsync(EmployeeCreateDto dto, CancellationToken cancellationToken = default)
         {
             var entity = new Employee
             {
@@ -80,11 +80,11 @@ namespace back_test_project.Repositories
             };
 
             _db.Employees.Add(entity);
-            await _db.SaveChangesAsync(ct);
+            await _db.SaveChangesAsync(cancellationToken);
             return entity.Id;
         }
 
-        public async Task UpdateAsync(Employee entity, EmployeeUpdateDto dto, CancellationToken ct = default)
+        public async Task UpdateAsync(Employee entity, EmployeeUpdateDto dto, CancellationToken cancellationToken = default)
         {
             entity.FirstName = dto.FirstName;
             entity.LastName = dto.LastName;
@@ -92,24 +92,24 @@ namespace back_test_project.Repositories
             entity.DepartmentId = dto.DepartmentId;
             entity.ManagerId = dto.ManagerId;
 
-            await _db.SaveChangesAsync(ct);
+            await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task DeleteAsync(Employee entity, CancellationToken ct = default)
+        public async Task DeleteAsync(Employee entity, CancellationToken cancellationToken = default)
         {
             _db.Employees.Remove(entity);
-            await _db.SaveChangesAsync(ct);
+            await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public Task<bool> HasSubordinatesAsync(int managerId, CancellationToken ct = default)
-            => _db.Employees.AnyAsync(e => e.ManagerId == managerId, ct);
+        public Task<bool> HasSubordinatesAsync(int managerId, CancellationToken cancellationToken = default)
+            => _db.Employees.AnyAsync(e => e.ManagerId == managerId, cancellationToken);
 
-        public Task<bool> ExistsAsync(int id, CancellationToken ct)
+        public Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
         {
-            return _db.Employees.AnyAsync(e => e.Id == id, ct);
+            return _db.Employees.AnyAsync(e => e.Id == id, cancellationToken);
         }
 
-        public async Task<(IReadOnlyList<EmployeeDataDto> Items, int Total)> GetPageAsync(int page, int pageSize, string sort, string order, CancellationToken ct = default)
+        public async Task<(IReadOnlyList<EmployeeDataDto> Items, int Total)> GetPageAsync(int page, int pageSize, string sort, string order, CancellationToken cancellationToken = default)
         {
             var baseQuery = _db.Employees
               .Select(e => new EmployeeDataDto
@@ -125,7 +125,7 @@ namespace back_test_project.Repositories
               })
             .AsQueryable();
 
-            var total = await baseQuery.CountAsync(ct);
+            var total = await baseQuery.CountAsync(cancellationToken);
 
             var sortKey = (sort ?? "lastName").Trim().ToLowerInvariant();
             var isAsc = string.Equals(order, "asc", StringComparison.OrdinalIgnoreCase);
@@ -155,7 +155,7 @@ namespace back_test_project.Repositories
                 items = await ordered
                         .Skip(skip)
                         .Take(Math.Max(1, pageSize))
-                        .ToListAsync(ct);
+                        .ToListAsync(cancellationToken);
             }
 
             return (items, total);

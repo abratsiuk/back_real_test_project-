@@ -24,7 +24,7 @@ namespace back_test_project.Repositories
                 .ToListAsync(ct);
         }
 
-        public async Task<IReadOnlyList<BookOptionDto>> GetOptionsAsync(CancellationToken ct = default)
+        public async Task<IReadOnlyList<BookOptionDto>> GetOptionsAsync(CancellationToken cancellationToken = default)
         {
             return await _db.Books
                 .Select(b => new BookOptionDto
@@ -33,10 +33,10 @@ namespace back_test_project.Repositories
                     Title = b.Title
                 })
                 .OrderBy(x => x.Title)
-                .ToListAsync(ct);
+                .ToListAsync(cancellationToken);
         }
 
-        public async Task<BookReadDto?> GetReadonlyByIdAsync(int id, CancellationToken ct = default)
+        public async Task<BookReadDto?> GetReadonlyByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _db.Books
                 .Where(b => b.Id == id)
@@ -48,13 +48,13 @@ namespace back_test_project.Repositories
                     Description = b.Description,
                     PublicationYear = b.PublicationYear
                 })
-                .FirstOrDefaultAsync(ct);
+                .FirstOrDefaultAsync(cancellationToken);
         }
 
-        public Task<Book?> GetByIdAsync(int id, CancellationToken ct = default)
-            => _db.Books.FirstOrDefaultAsync(b => b.Id == id, ct);
+        public Task<Book?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+            => _db.Books.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
 
-        public async Task<int> CreateAsync(BookCreateDto dto, CancellationToken ct = default)
+        public async Task<int> CreateAsync(BookCreateDto dto, CancellationToken cancellationToken = default)
         {
             var entity = new Book
             {
@@ -65,31 +65,31 @@ namespace back_test_project.Repositories
             };
 
             _db.Books.Add(entity);
-            await _db.SaveChangesAsync(ct);
+            await _db.SaveChangesAsync(cancellationToken);
             return entity.Id;
         }
 
-        public async Task UpdateAsync(Book entity, BookUpdateDto dto, CancellationToken ct = default)
+        public async Task UpdateAsync(Book entity, BookUpdateDto dto, CancellationToken cancellationToken = default)
         {
             entity.Title = dto.Title;
             entity.Authors = dto.Authors;
             entity.Description = dto.Description;
             entity.PublicationYear = dto.PublicationYear;
 
-            await _db.SaveChangesAsync(ct);
+            await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task DeleteAsync(Book entity, CancellationToken ct = default)
+        public async Task DeleteAsync(Book entity, CancellationToken cancellationToken = default)
         {
             _db.Books.Remove(entity);
-            await _db.SaveChangesAsync(ct);
+            await _db.SaveChangesAsync(cancellationToken);
         }
 
-        public Task<bool> ExistsAsync(int id, CancellationToken ct)
-            => _db.Books.AnyAsync(b => b.Id == id, ct);
+        public Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
+            => _db.Books.AnyAsync(b => b.Id == id, cancellationToken);
 
         public async Task<(IReadOnlyList<BookDataDto> Items, int Total)> GetPageAsync(
-            int page, int pageSize, string sort, string order, CancellationToken ct = default)
+            int page, int pageSize, string sort, string order, CancellationToken cancellationToken = default)
         {
             var baseQuery = _db.Books
                 .Select(b => new BookDataDto
@@ -101,7 +101,7 @@ namespace back_test_project.Repositories
                 })
                 .AsQueryable();
 
-            var total = await _db.Books.CountAsync(ct);
+            var total = await _db.Books.CountAsync(cancellationToken);
 
             var sortKey = (sort ?? "title").Trim().ToLowerInvariant();
             var isAsc = string.Equals(order, "asc", StringComparison.OrdinalIgnoreCase);
@@ -117,7 +117,7 @@ namespace back_test_project.Repositories
 
             var items = total == 0
                 ? new List<BookDataDto>()
-                : await ordered.Skip(skip).Take(Math.Max(1, pageSize)).ToListAsync(ct);
+                : await ordered.Skip(skip).Take(Math.Max(1, pageSize)).ToListAsync(cancellationToken);
 
             return (items, total);
         }

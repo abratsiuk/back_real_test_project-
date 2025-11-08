@@ -9,7 +9,7 @@ namespace back_test_project.Repositories
         private readonly AppDbContext _db;
         public DepartmentRepository(AppDbContext db) => _db = db;
 
-        public async Task<IReadOnlyList<DepartmentDto>> GetAllAsync(CancellationToken ct = default)
+        public async Task<IReadOnlyList<DepartmentDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             return await _db.Departments
                 .Select(d => new DepartmentDto
@@ -18,15 +18,15 @@ namespace back_test_project.Repositories
                     DepartmentName = d.DepartmentName
                 })
                 .OrderBy(d => d.DepartmentName)
-                .ToListAsync(ct);
+                .ToListAsync(cancellationToken);
         }
 
-        public async Task<string?> GetNameByIdAsync(int id, CancellationToken ct = default)
+        public async Task<string?> GetNameByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _db.Departments
                 .Where(d => d.Id == id)
                 .Select(d => d.DepartmentName)
-                .FirstOrDefaultAsync(ct);
+                .FirstOrDefaultAsync(cancellationToken);
         }
     }
 }
