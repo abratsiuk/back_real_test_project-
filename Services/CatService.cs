@@ -5,16 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace back_test_project.Services
 {
-    public class CatService : ICatService
+    public class CatService(ICatRepository repository, ILogger<CatService> logger) : ICatService
     {
-        private readonly ICatRepository _repository;
-        private readonly ILogger<CatService> _logger;
-
-        public CatService(ICatRepository repository, ILogger<CatService> logger)
-        {
-            _repository = repository;
-            _logger = logger;
-        }
+        private readonly ICatRepository _repository = repository;
+        private readonly ILogger<CatService> _logger = logger;
 
         public async Task<IEnumerable<CatDataDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {

@@ -1,7 +1,9 @@
-using back_test_project.Data;
+п»їusing back_test_project.Data;
 using back_test_project.Repositories;
 using back_test_project.Services;
+using back_test_project.Validation.Books;
 using back_test_project.Validation.Cats;
+using back_test_project.Validation.Employees;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
@@ -26,31 +28,39 @@ builder.Services.AddCors(o =>
 builder.Services
     .AddFluentValidationAutoValidation()
     .AddFluentValidationClientsideAdapters();
-builder.Services.AddValidatorsFromAssemblyContaining<CatCreateDtoValidator>();
 
-//builder.Services.AddDbContext<AppDbContext>(options =>
-//    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+builder.Services.AddValidatorsFromAssemblyContaining<BookCreateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<BookUpdateDtoValidator>();
+
+builder.Services.AddValidatorsFromAssemblyContaining<CatCreateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CatUpdateDtoValidator>();
+
+builder.Services.AddValidatorsFromAssemblyContaining<EmployeeCreateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<EmployeeUpdateDtoValidator>();
+
 
 // ---------- DB connection (Render + local) ----------
 string? rawConn =
-    Environment.GetEnvironmentVariable("ConnectionStrings__Default")  // Render (как у Вас)
-    ?? Environment.GetEnvironmentVariable("DATABASE_URL")             // альтернатива
-    ?? builder.Configuration.GetConnectionString("Default");          // локально
+    Environment.GetEnvironmentVariable("ConnectionStrings__Default")  // Render (РєР°Рє Сѓ Р’Р°СЃ)
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL")             // Р°Р»СЊС‚РµСЂРЅР°С‚РёРІР°
+    ?? builder.Configuration.GetConnectionString("Default");          // Р»РѕРєР°Р»СЊРЅРѕ
 
 if (string.IsNullOrWhiteSpace(rawConn))
-    throw new InvalidOperationException("No DB connection string found.");
-
-// Преобразуем к валидной Npgsql key=value строке
-string BuildConn(string input)
 {
-    // URL-формат? (postgres://... или postgresql://...)
+    throw new InvalidOperationException("No DB connection string found.");
+}
+
+// РџСЂРµРѕР±СЂР°Р·СѓРµРј Рє РІР°Р»РёРґРЅРѕР№ Npgsql key=value СЃС‚СЂРѕРєРµ
+static string BuildConn(string input)
+{
+    // URL format (Render.com)
     if (input.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
         input.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
     {
         var uri = new Uri(input);
-        var ui = uri.UserInfo.Split(':', 2);
-        var user = Uri.UnescapeDataString(ui[0]);
-        var pass = ui.Length > 1 ? Uri.UnescapeDataString(ui[1]) : "";
+        string[] ui = uri.UserInfo.Split(':', 2);
+        string user = Uri.UnescapeDataString(ui[0]);
+        string pass = ui.Length > 1 ? Uri.UnescapeDataString(ui[1]) : "";
 
         var b = new NpgsqlConnectionStringBuilder
         {
@@ -59,22 +69,20 @@ string BuildConn(string input)
             Database = uri.AbsolutePath.Trim('/'),
             Username = user,
             Password = pass,
-            SslMode = SslMode.Require,
-            TrustServerCertificate = true
+            SslMode = SslMode.Require
         };
         return b.ToString();
     }
 
-    // key=value формат (локально)
+    // key=value format (local)
     if (input.Contains("="))
     {
         var b = new NpgsqlConnectionStringBuilder(input);
         if (b.SslMode == SslMode.Disable)
         {
-            // локально можно оставить Disable; на всякий случай не ломаем,
-            // но если нужно принудить SSL, раскомментируйте:
+            // Locally you can leave SslMode set to Disable; to avoid breaking anything we keep it as is.
+            // If you need to force SSL, uncomment the lines below:
             // b.SslMode = SslMode.Require;
-            // b.TrustServerCertificate = true;
         }
         return b.ToString();
     }
@@ -82,15 +90,13 @@ string BuildConn(string input)
     throw new ArgumentException("Unrecognized DB connection string format.");
 }
 
-var finalConn = BuildConn(rawConn);
+string finalConn = BuildConn(rawConn);
 
-// (опционально) короткий лог — без пароля
-var masked = finalConn.Replace($"Password={new NpgsqlConnectionStringBuilder(finalConn).Password}", "Password=***");
+// (optional) short log вЂ” without password
+string masked = finalConn.Replace($"Password={new NpgsqlConnectionStringBuilder(finalConn).Password}", "Password=***");
 Console.WriteLine($"[DB] Using connection: {masked}");
 
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(finalConn));
-
-
 
 
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
@@ -105,11 +111,14 @@ builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<ICatRepository, CatRepository>();
 builder.Services.AddScoped<ICatService, CatService>();
 
-var port = Environment.GetEnvironmentVariable("PORT");
+string? port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port))
 {
-    //start only in Render.com
+    //start only in Render.com - it is necessary there!
+
+#pragma warning disable IDE0058 // Expression value is never used
     builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+#pragma warning restore IDE0058 // Expression value is never used
 }
 
 var app = builder.Build();
@@ -152,7 +161,7 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy 29102025 1700" })
 //check that database is updated
 app.MapGet("/db-check", async (AppDbContext db) =>
 {
-    var canConnect = await db.Database.CanConnectAsync();
+    bool canConnect = await db.Database.CanConnectAsync();
     return Results.Ok(new { db = canConnect });
 });
 

@@ -5,10 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace back_test_project.Repositories
 {
-    public class BookRepository : IBookRepository
+    public class BookRepository(AppDbContext db) : IBookRepository
     {
-        private readonly AppDbContext _db;
-        public BookRepository(AppDbContext db) => _db = db;
+        private readonly AppDbContext _db = db;
 
         public async Task<IReadOnlyList<BookDataDto>> GetAllDataAsync(CancellationToken ct = default)
         {
@@ -40,69 +39,85 @@ namespace back_test_project.Repositories
         }
 
         public Task<Book?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-            => _db.Books.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
-
-        public async Task<int> CreateAsync(BookCreateDto dto, CancellationToken cancellationToken = default)
         {
-            var entity = new Book
-            {
-                Title = dto.Title,
-                Authors = dto.Authors,
-                Description = dto.Description,
-                PublicationYear = dto.PublicationYear
-            };
-
-            _db.Books.Add(entity);
-            await _db.SaveChangesAsync(cancellationToken);
-            return entity.Id;
+            return _db.Books.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
         }
 
-        public async Task UpdateAsync(Book entity, BookUpdateDto dto, CancellationToken cancellationToken = default)
+        public async Task CreateAsync(Book entity, CancellationToken cancellationToken = default)
         {
-            entity.Title = dto.Title;
-            entity.Authors = dto.Authors;
-            entity.Description = dto.Description;
-            entity.PublicationYear = dto.PublicationYear;
-
-            await _db.SaveChangesAsync(cancellationToken);
+            await _db.Books.AddAsync(entity, cancellationToken);
         }
 
-        public async Task DeleteAsync(Book entity, CancellationToken cancellationToken = default)
+        public void Remove(Book entity)
         {
             _db.Books.Remove(entity);
+        }
+        public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
             await _db.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<(IReadOnlyList<BookDataDto> Items, int Total)> GetPageAsync(
-            int page, int pageSize, string sort, string order, CancellationToken cancellationToken = default)
+            BookPageQueryDto query,
+            CancellationToken cancellationToken = default)
         {
-            var baseQuery = _db.Books
-                .Select(b => new BookDataDto
-                {
-                    Id = b.Id,
-                    Title = b.Title,
-                    Authors = b.Authors,
-                    PublicationYear = b.PublicationYear
-                })
-                .AsQueryable();
+            var whereQuery = _db.Books.AsQueryable();
 
-            var total = await _db.Books.CountAsync(cancellationToken);
-
-            var sortKey = (sort ?? "title").Trim().ToLowerInvariant();
-            var isAsc = string.Equals(order, "asc", StringComparison.OrdinalIgnoreCase);
-
-            IOrderedQueryable<BookDataDto> ordered = sortKey switch
+            if (!string.IsNullOrWhiteSpace(query.Title))
             {
-                "authors" => isAsc ? baseQuery.OrderBy(x => x.Authors) : baseQuery.OrderByDescending(x => x.Authors),
-                "publicationyear" => isAsc ? baseQuery.OrderBy(x => x.PublicationYear) : baseQuery.OrderByDescending(x => x.PublicationYear),
-                _ => isAsc ? baseQuery.OrderBy(x => x.Title) : baseQuery.OrderByDescending(x => x.Title)
+                string pattern = query.Title.Trim().ToLowerInvariant();
+                whereQuery = whereQuery.Where(b => b.Title.ToLowerInvariant().Contains(pattern));
+            }
+            if (!string.IsNullOrWhiteSpace(query.Authors))
+            {
+                string pattern = query.Authors.Trim().ToLowerInvariant();
+                whereQuery = whereQuery.Where(b => b.Authors.ToLowerInvariant().Contains(pattern));
+            }
+
+            if (query.MinYear.HasValue)
+            {
+                whereQuery = whereQuery.Where(b => b.PublicationYear >= query.MinYear.Value);
+            }
+
+            if (query.MaxYear.HasValue)
+            {
+                whereQuery = whereQuery.Where(b => b.PublicationYear <= query.MaxYear.Value);
+            }
+
+            int total = await whereQuery.CountAsync(cancellationToken);
+            if (total == 0)
+            {
+                return (Array.Empty<BookDataDto>(), 0);
+            }
+
+            var selectQuery = whereQuery.Select(b => new BookDataDto
+            {
+                Id = b.Id,
+                Title = b.Title,
+                Authors = b.Authors,
+                PublicationYear = b.PublicationYear
+            });
+
+            string sortKey = (query.Sort ?? "title").Trim().ToLowerInvariant();
+            bool isAsc = string.Equals(query.Order, "asc", StringComparison.OrdinalIgnoreCase);
+
+            var orderedQuery = sortKey switch
+            {
+                "id" => isAsc ? selectQuery.OrderBy(x => x.Id) : selectQuery.OrderByDescending(x => x.Id),
+                "title" => isAsc ? selectQuery.OrderBy(x => x.Title) : selectQuery.OrderByDescending(x => x.Title),
+                "authors" => isAsc ? selectQuery.OrderBy(x => x.Authors) : selectQuery.OrderByDescending(x => x.Authors),
+                "publicationyear" => isAsc ? selectQuery.OrderBy(x => x.PublicationYear) : selectQuery.OrderByDescending(x => x.PublicationYear),
+                _ => isAsc
+                    ? selectQuery.OrderBy(x => x.Title)
+                    : selectQuery.OrderByDescending(x => x.Title)
             };
 
-            var skip = Math.Max(0, page) * Math.Max(1, pageSize);
+            int skip = Math.Max(0, query.Page) * Math.Max(1, query.PageSize);
 
-            var items = total == 0
-                ? new List<BookDataDto>()
-                : await ordered.Skip(skip).Take(Math.Max(1, pageSize)).ToListAsync(cancellationToken);
+            var items = await orderedQuery
+                        .Skip(skip)
+                        .Take(Math.Max(1, query.PageSize))
+                        .ToListAsync(cancellationToken);
 
             return (items, total);
         }

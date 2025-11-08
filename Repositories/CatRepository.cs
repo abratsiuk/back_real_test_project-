@@ -5,14 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace back_test_project.Repositories
 {
-    public class CatRepository : ICatRepository
+    public class CatRepository(AppDbContext db) : ICatRepository
     {
-        private readonly AppDbContext _db;
-
-        public CatRepository(AppDbContext db)
-        {
-            _db = db;
-        }
+        private readonly AppDbContext _db = db;
 
         public async Task<IEnumerable<CatDataDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
@@ -55,55 +50,59 @@ namespace back_test_project.Repositories
             CatPageQueryDto query,
             CancellationToken cancellationToken = default)
         {
-            var baseQuery = _db.Cats
+            var whereQuery = _db.Cats.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query.Name))
+            {
+                string pattern = query.Name.Trim().ToLower();
+                whereQuery = whereQuery.Where(c => c.Name.ToLowerInvariant().Contains(pattern));
+            }
+            if (query.MinAge.HasValue)
+            {
+                whereQuery = whereQuery.Where(c => c.Age >= query.MinAge.Value);
+            }
+
+            if (query.MaxAge.HasValue) whereQuery = whereQuery.Where(c => c.Age <= query.MaxAge.Value);
+
+            int total = await whereQuery.CountAsync(cancellationToken);
+            if (total == 0)
+            {
+                return (Array.Empty<CatDataDto>(), 0);
+            }
+
+            var selectedQuery = whereQuery
                 .Select(c => new CatDataDto
                 {
                     Id = c.Id,
                     Name = c.Name,
                     Age = c.Age
                 });
-            if (!string.IsNullOrWhiteSpace(query.Name))
-            {
-                var pattern = query.Name.Trim().ToLower();
-                baseQuery = baseQuery.Where(c => c.Name.ToLowerInvariant().Contains(pattern));
-            }
-            if (query.MinAge.HasValue)
-                baseQuery = baseQuery.Where(c => c.Age >= query.MinAge.Value);
 
-            if (query.MaxAge.HasValue)
-                baseQuery = baseQuery.Where(c => c.Age <= query.MaxAge.Value);
+            int safePage = query.Page < 0 ? 0 : query.Page;
+            int safePageSize = query.PageSize <= 0 ? 10 : query.PageSize;
+
+            string sortKey = (query.Sort ?? "name").Trim().ToLowerInvariant();
+            bool isAsc = string.Equals(query.Order, "asc", StringComparison.OrdinalIgnoreCase);
 
 
-            var total = await baseQuery.CountAsync(cancellationToken);
-
-            var safePage = query.Page < 0 ? 0 : query.Page;
-            var safePageSize = query.PageSize <= 0 ? 10 : query.PageSize;
-
-            var sortKey = (query.Sort ?? "name").Trim().ToLowerInvariant();
-            var isAsc = string.Equals(query.Order, "asc", StringComparison.OrdinalIgnoreCase);
-
-
-            IOrderedQueryable<CatDataDto> ordered = sortKey switch
+            var orderedQuery = sortKey switch
             {
                 "id" => isAsc
-                    ? baseQuery.OrderBy(x => x.Id)
-                    : baseQuery.OrderByDescending(x => x.Id),
+                    ? selectedQuery.OrderBy(x => x.Id)
+                    : selectedQuery.OrderByDescending(x => x.Id),
 
                 "age" => isAsc
-                    ? baseQuery.OrderBy(x => x.Age)
-                    : baseQuery.OrderByDescending(x => x.Age),
+                    ? selectedQuery.OrderBy(x => x.Age)
+                    : selectedQuery.OrderByDescending(x => x.Age),
 
                 "name" or _ => isAsc
-                    ? baseQuery.OrderBy(x => x.Name)
-                    : baseQuery.OrderByDescending(x => x.Name)
+                    ? selectedQuery.OrderBy(x => x.Name)
+                    : selectedQuery.OrderByDescending(x => x.Name)
             };
 
-            if (total == 0)
-            {
-                return (Array.Empty<CatDataDto>(), 0);
-            }
 
-            var items = await ordered
+
+            var items = await orderedQuery
                 .Skip(safePage * safePageSize)
                 .Take(safePageSize)
                 .ToListAsync(cancellationToken);

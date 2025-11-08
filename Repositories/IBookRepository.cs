@@ -11,13 +11,12 @@ namespace back_test_project.Repositories
 
         Task<Book?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
-        Task<int> CreateAsync(BookCreateDto dto, CancellationToken cancellationToken = default);
+        Task CreateAsync(Book entity, CancellationToken cancellationToken = default);
 
-        Task UpdateAsync(Book entity, BookUpdateDto dto, CancellationToken cancellationToken = default);
-
-        Task DeleteAsync(Book entity, CancellationToken cancellationToken = default);
+        void Remove(Book entity);
+        Task SaveChangesAsync(CancellationToken cancellationToken = default);
 
         Task<(IReadOnlyList<BookDataDto> Items, int Total)> GetPageAsync(
-            int page, int pageSize, string sort, string order, CancellationToken cancellationToken = default);
+            BookPageQueryDto query, CancellationToken cancellationToken = default);
     }
 }

@@ -13,17 +13,16 @@ namespace back_test_project.Repositories
 
         Task<Employee?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
-        Task<int> CreateAsync(EmployeeCreateDto dto, CancellationToken cancellationToken = default);
+        Task CreateAsync(Employee entity, CancellationToken cancellationToken = default);
 
-        Task UpdateAsync(Employee entity, EmployeeUpdateDto dto, CancellationToken cancellationToken = default);
-
-        Task DeleteAsync(Employee entity, CancellationToken cancellationToken = default);
+        void Remove(Employee entity);
+        Task SaveChangesAsync(CancellationToken cancellationToken = default);
 
         Task<bool> HasSubordinatesAsync(int managerId, CancellationToken cancellationToken = default);
-        Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default);
 
         Task<(IReadOnlyList<EmployeeDataDto> Items, int Total)> GetPageAsync(
-                int page, int pageSize, string sort, string order, CancellationToken cancellationToken = default);
+            EmployeePageQueryDto query,
+            CancellationToken cancellationToken = default);
 
     }
 }

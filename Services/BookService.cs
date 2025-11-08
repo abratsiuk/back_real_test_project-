@@ -1,24 +1,20 @@
 ﻿using back_test_project.DTO;
+using back_test_project.Models;
 using back_test_project.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace back_test_project.Services
 {
-    public class BookService : IBookService
+    public class BookService(IBookRepository repo, ILogger<BookService> logger) : IBookService
     {
-        private readonly IBookRepository _repository;
-        private readonly ILogger<BookService> _logger;
-        public BookService(IBookRepository repo, ILogger<BookService> logger)
-        {
-            _repository = repo;
-            _logger = logger;
-        }
+        private readonly IBookRepository _repository = repo;
+        private readonly ILogger<BookService> _logger = logger;
 
-        public async Task<IReadOnlyList<BookDataDto>> GetAllDataAsync(CancellationToken ct = default)
+        public async Task<IReadOnlyList<BookDataDto>> GetAllDataAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _repository.GetAllDataAsync(ct);
+                return await _repository.GetAllDataAsync(cancellationToken);
             }
             catch (Exception ex)
             {
@@ -27,11 +23,11 @@ namespace back_test_project.Services
             }
         }
 
-        public async Task<BookReadDto?> GetReadonlyByIdAsync(int id, CancellationToken ct = default)
+        public async Task<BookReadDto?> GetReadonlyByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _repository.GetReadonlyByIdAsync(id, ct);
+                return await _repository.GetReadonlyByIdAsync(id, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -40,89 +36,116 @@ namespace back_test_project.Services
             }
         }
 
-        public async Task<(IReadOnlyList<BookDataDto> items, int total)> GetPageAsync(
-            int page, int pageSize, string sort, string order, CancellationToken ct)
+
+        public async Task<(IReadOnlyList<BookDataDto> Items, int Total)> GetPageAsync(
+        BookPageQueryDto query,
+        CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _repository.GetPageAsync(page, pageSize, sort, order, ct);
+                return await _repository.GetPageAsync(query, cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching book page.");
+                _logger.LogError(ex,
+                    "Error while getting books page. page={Page}, pageSize={PageSize}, sort={Sort}, order={Order}",
+                    query.Page, query.PageSize, query.Sort, query.Order);
                 throw;
             }
-
         }
 
-        public async Task<BookDataDto> CreateAsync(BookCreateDto dto, CancellationToken ct = default)
+        public async Task<BookDataDto> CreateAsync(BookCreateDto dto, CancellationToken cancellationToken = default)
         {
+            var entity = new Book
+            {
+                Title = dto.Title.Trim(),
+                Authors = dto.Authors.Trim(),
+                Description = dto.Description?.Trim(),
+                PublicationYear = dto.PublicationYear
+            };
             try
             {
-                var newId = await _repository.CreateAsync(dto, ct);
-                return new BookDataDto
+                await _repository.CreateAsync(entity, cancellationToken);
+                await _repository.SaveChangesAsync(cancellationToken);
+                var result = new BookDataDto
                 {
-                    Id = newId,
-                    Title = dto.Title,
-                    Authors = dto.Authors,
-                    PublicationYear = dto.PublicationYear
+                    Id = entity.Id,
+                    Title = entity.Title,
+                    Authors = entity.Authors,
+                    PublicationYear = entity.PublicationYear
                 };
+                return result;
             }
             catch (DbUpdateException dbUpdateException)
             {
-                _logger.LogError(dbUpdateException, "Database update error while creating a new book.");
+                _logger.LogError(dbUpdateException, "Error creating new Book with Title {Title}", dto.Title);
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating new book.");
+                _logger.LogError(ex, "Unexpected error while creating new Book with Title {Title}", dto.Title);
                 throw;
             }
 
         }
 
-        public async Task<bool> UpdateAsync(int id, BookUpdateDto dto, CancellationToken ct = default)
+        public async Task<bool> UpdateAsync(int id, BookUpdateDto dto, CancellationToken cancellationToken = default)
         {
-            var entity = await _repository.GetByIdAsync(id, ct)
-                         ?? throw new KeyNotFoundException("Book not found.");
+            var entity = await _repository.GetByIdAsync(id, cancellationToken);
+            if (entity == null)
+            {
+                _logger.LogWarning("Book with Id {Id} not found for update.", id);
+                return false;
+            }
+
+            entity.Title = dto.Title.Trim();
+            entity.Authors = dto.Authors.Trim();
+            entity.Description = dto.Description?.Trim();
+            entity.PublicationYear = dto.PublicationYear;
 
             try
             {
-                await _repository.UpdateAsync(entity, dto, ct);
-                return true;
+                await _repository.SaveChangesAsync(cancellationToken);
             }
-            catch (DbUpdateException dbEx)
+            catch (DbUpdateException dbUpdateException)
             {
-                _logger.LogError(dbEx, "Database update error while updating book with ID {Id}.", id);
+                _logger.LogError(dbUpdateException, "Error updating Book with Id {Id}", id);
                 return false;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating book with ID {Id}.", id);
+                _logger.LogError(ex, "Unexpected error while updating Book with Id {Id}", id);
                 throw;
             }
+
+            return true;
         }
 
-        public async Task<bool> DeleteAsync(int id, CancellationToken ct = default)
+        public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            var entity = await _repository.GetByIdAsync(id, ct)
-                         ?? throw new KeyNotFoundException("Book not found.");
+            var entity = await _repository.GetByIdAsync(id, cancellationToken);
+            if (entity == null)
+            {
+                _logger.LogWarning("Book with Id {Id} not found for deletion.", id);
+                return false;
+            }
 
             try
             {
-                await _repository.DeleteAsync(entity, ct);
-                return true;
+                _repository.Remove(entity);
+                await _repository.SaveChangesAsync(cancellationToken);
             }
-            catch (DbUpdateException dbEx)
+            catch (DbUpdateException dbUpdateException)
             {
-                _logger.LogError(dbEx, "Database update error while deleting book with ID {Id}.", id);
+                _logger.LogError(dbUpdateException, "Error deleting Book with Id {Id}", id);
                 return false;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting book with ID {Id}.", id);
+                _logger.LogError(ex, "Unexpected error while deleting Book with Id {Id}", id);
                 throw;
             }
+            return true;
         }
 
     }

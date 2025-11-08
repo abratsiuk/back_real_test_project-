@@ -1,28 +1,21 @@
 ﻿using back_test_project.DTO;
+using back_test_project.Models;
 using back_test_project.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace back_test_project.Services
 {
-    public class EmployeeService : IEmployeeService
+    public class EmployeeService(IEmployeeRepository repository,
+        ILogger<EmployeeService> logger) : IEmployeeService
     {
-        private readonly IEmployeeRepository _repositoryEmployee;
-        private readonly IDepartmentRepository _repositoryDepartment;
-        private readonly ILogger<EmployeeService> _logger;
-        public EmployeeService(IEmployeeRepository repositoryEmployee,
-            IDepartmentRepository repositoryDepartment,
-            ILogger<EmployeeService> logger)
-        {
-            _repositoryEmployee = repositoryEmployee;
-            _repositoryDepartment = repositoryDepartment;
-            _logger = logger;
-        }
+        private readonly IEmployeeRepository _repository = repository;
+        private readonly ILogger<EmployeeService> _logger = logger;
 
-        public async Task<IReadOnlyList<EmployeeDataDto>> GetAllDataAsync(CancellationToken ct = default)
+        public async Task<IReadOnlyList<EmployeeDataDto>> GetAllDataAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _repositoryEmployee.GetAllDataAsync(ct);
+                return await _repository.GetAllDataAsync(cancellationToken);
             }
             catch (Exception ex)
             {
@@ -31,11 +24,28 @@ namespace back_test_project.Services
             }
         }
 
-        public async Task<IReadOnlyList<EmployeeOptionDto>> GetOptionsAsync(CancellationToken ct = default)
+        public async Task<(IReadOnlyList<EmployeeDataDto> Items, int Total)> GetPageAsync(
+            EmployeePageQueryDto query,
+            CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _repositoryEmployee.GetOptionsAsync(ct);
+                return await _repository.GetPageAsync(query, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Error while getting employees page. page={Page}, pageSize={PageSize}, sort={Sort}, order={Order}",
+                    query.Page, query.PageSize, query.Sort, query.Order);
+                throw;
+            }
+        }
+
+        public async Task<IReadOnlyList<EmployeeOptionDto>> GetOptionsAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _repository.GetOptionsAsync(cancellationToken);
             }
             catch (Exception ex)
             {
@@ -44,11 +54,11 @@ namespace back_test_project.Services
             }
         }
 
-        public async Task<EmployeeReadDto?> GetReadonlyByIdAsync(int id, CancellationToken ct = default)
+        public async Task<EmployeeReadDto?> GetReadonlyByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _repositoryEmployee.GetReadonlyByIdAsync(id, ct);
+                return await _repository.GetReadonlyByIdAsync(id, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -57,95 +67,129 @@ namespace back_test_project.Services
             }
         }
 
-        public async Task<EmployeeReadDto> CreateAsync(EmployeeCreateDto dto, CancellationToken ct = default)
+        public async Task<EmployeeReadDto> CreateAsync(EmployeeCreateDto dto, CancellationToken cancellationToken = default)
         {
-            var newId = 0;
+            var entity = new Employee
+            {
+                FirstName = dto.FirstName.Trim(),
+                LastName = dto.LastName.Trim(),
+                DepartmentId = dto.DepartmentId,
+                ManagerId = dto.ManagerId,
+                Salary = dto.Salary
+            };
+
             try
             {
-                newId = await _repositoryEmployee.CreateAsync(dto, ct);
-            }
-            catch (DbUpdateException dbEx)
-            {
-                _logger.LogError(dbEx, "Database update error while creating new employee.");
-                throw;
-            }
-            catch (Exception)
-            {
-                _logger.LogError("Error creating new employee.");
-                throw;
-            }
+                await _repository.CreateAsync(entity, cancellationToken);
+                await _repository.SaveChangesAsync(cancellationToken);
 
-            var result = await _repositoryEmployee.GetReadonlyByIdAsync(newId, ct)
-             ?? throw new Exception("Failed to retrieve newly created employee.");
-            return result;
+                var result = new EmployeeReadDto
+                {
+                    Id = entity.Id,
+                    FirstName = entity.FirstName,
+                    LastName = entity.LastName,
+                    DepartmentId = entity.DepartmentId,
+                    ManagerId = entity.ManagerId,
+                    Salary = entity.Salary
+                };
+                return result;
+            }
+            catch (DbUpdateException dbUpdateException)
+            {
+                _logger.LogError(dbUpdateException, "Database update error while creating new Employee with FirstName {FirstName} LastName {LastName}", dto.FirstName, dto.LastName);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while creating new Employee with FirstName {FirstName} LastName {LastName}", dto.FirstName, dto.LastName);
+                throw;
+            }
         }
 
-        public async Task<bool> UpdateAsync(int id, EmployeeUpdateDto dto, CancellationToken ct = default)
+        public async Task<bool> UpdateAsync(int id, EmployeeUpdateDto dto, CancellationToken cancellationToken = default)
         {
-            if (dto.ManagerId.HasValue && dto.ManagerId.Value == id)
-                throw new InvalidOperationException("Employee cannot be his own manager.");
+            var entity = await _repository.GetByIdAsync(id, cancellationToken);
+            if (entity == null)
+            {
+                _logger.LogWarning("Employee with Id {Id} not found for update.", id);
+                return false;
+            }
 
-            var entity = await _repositoryEmployee.GetByIdAsync(id, ct)
-                         ?? throw new KeyNotFoundException("Employee not found.");
+            entity.FirstName = dto.FirstName.Trim();
+            entity.LastName = dto.LastName.Trim();
+            entity.DepartmentId = dto.DepartmentId;
+            entity.ManagerId = dto.ManagerId;
+            entity.Salary = dto.Salary;
 
             try
             {
-                await _repositoryEmployee.UpdateAsync(entity, dto, ct);
-                return true;
+                await _repository.SaveChangesAsync(cancellationToken);
             }
-            catch (DbUpdateException dbEx)
+            catch (DbUpdateException dbUpdateException)
             {
-                _logger.LogError(dbEx, "Database update error while updating employee with ID {Id}.", id);
+                _logger.LogError(dbUpdateException, "Error updating Employee with Id {Id}", id);
                 return false;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating employee with ID {Id}.", id);
+                _logger.LogError(ex, "Unexpected error while updating Employee with Id {Id}", id);
                 throw;
             }
+
+            return true;
         }
 
-        public async Task<bool> DeleteAsync(int id, CancellationToken ct = default)
+        public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            var entity = await _repositoryEmployee.GetByIdAsync(id, ct)
-                         ?? throw new KeyNotFoundException("Employee not found.");
+            var entity = await _repository.GetByIdAsync(id, cancellationToken);
+            if (entity == null)
+            {
+                _logger.LogWarning("Employee with Id {Id} not found for deletion.", id);
+                return false;
+            }
 
-            var hasSubs = await _repositoryEmployee.HasSubordinatesAsync(id, ct);
+            bool hasSubs = await _repository.HasSubordinatesAsync(id, cancellationToken);
             if (hasSubs)
-                throw new InvalidOperationException("This employee is a manager and cannot be deleted.");
+            {
+                _logger.LogWarning("Attempted to delete Employee with Id {Id} who is a manager.", id);
+                return false;
+            }
 
             try
             {
-                await _repositoryEmployee.DeleteAsync(entity, ct);
-                return true;
+                _repository.Remove(entity);
+                await _repository.SaveChangesAsync(cancellationToken);
             }
-            catch (DbUpdateException dbEx)
+            catch (DbUpdateException dbUpdateException)
             {
-                _logger.LogError(dbEx, "Database update error while deleting employee with ID {Id}.", id);
+                _logger.LogError(dbUpdateException, "Error deleting Employee with Id {Id}", id);
                 return false;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                _logger.LogError("Error deleting employee with ID {Id}.", id);
+                _logger.LogError(ex, "Unexpected error while deleting Employee with Id {Id}", id);
                 throw;
             }
+            return true;
 
         }
 
-        public async Task<EmployeeCanDeleteDto> CanDeleteAsync(int id, CancellationToken ct = default)
+        public async Task<EmployeeCanDeleteDto> CanDeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            var exists = await _repositoryEmployee.ExistsAsync(id, ct);
-            if (!exists) return new EmployeeCanDeleteDto { CanDelete = false, Reason = "Employee not found." };
+            bool hasSubordinate = await _repository.HasSubordinatesAsync(id, cancellationToken);
 
-            var hasSubs = await _repositoryEmployee.HasSubordinatesAsync(id, ct);
-            if (hasSubs) return new EmployeeCanDeleteDto { CanDelete = false, Reason = "This employee is a manager and cannot be deleted." };
+            if (hasSubordinate)
+            {
+                return new EmployeeCanDeleteDto
+                {
+                    CanDelete = false,
+                    Reason = "This employee is a manager who has subordinates."
+                };
+            }
 
             return new EmployeeCanDeleteDto { CanDelete = true };
         }
 
-        public async Task<(IReadOnlyList<EmployeeDataDto> items, int total)> GetPageAsync(int page, int pageSize, string sort, string order, CancellationToken ct)
-        {
-            return await _repositoryEmployee.GetPageAsync(page, pageSize, sort, order, ct);
-        }
+
     }
 }

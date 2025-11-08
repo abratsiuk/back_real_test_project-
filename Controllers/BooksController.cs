@@ -6,27 +6,23 @@ namespace back_test_project.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class BooksController : ControllerBase
+    public class BooksController(IBookService service) : ControllerBase
     {
-        private readonly IBookService _service;
-        public BooksController(IBookService service) => _service = service;
+        private readonly IBookService _service = service;
 
-        [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<BookDataDto>>> GetAll(CancellationToken ct)
-        {
-            var items = await _service.GetAllDataAsync(ct);
-            return Ok(items);
-        }
+        //[HttpGet]
+        //public async Task<ActionResult<IReadOnlyList<BookDataDto>>> GetAll(CancellationToken ct)
+        //{
+        //    var items = await _service.GetAllDataAsync(ct);
+        //    return Ok(items);
+        //}
 
         [HttpGet("page")]
         public async Task<ActionResult<PagedResultDto<BookDataDto>>> GetPage(
-            [FromQuery] int page = 0,
-            [FromQuery] int pageSize = 10,
-            [FromQuery] string sort = "title",
-            [FromQuery] string order = "asc",
+            [FromQuery] BookPageQueryDto query,
             CancellationToken ct = default)
         {
-            var (items, total) = await _service.GetPageAsync(page, pageSize, sort, order, ct);
+            var (items, total) = await _service.GetPageAsync(query, ct);
             return Ok(new PagedResultDto<BookDataDto> { Data = items, TotalCount = total });
         }
 
@@ -34,7 +30,11 @@ namespace back_test_project.Controllers
         public async Task<ActionResult<BookReadDto>> GetById(int id, CancellationToken ct)
         {
             var item = await _service.GetReadonlyByIdAsync(id, ct);
-            if (item == null) return NotFound();
+            if (item == null)
+            {
+                return NotFound();
+            }
+
             return Ok(item);
         }
 
@@ -48,7 +48,7 @@ namespace back_test_project.Controllers
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] BookUpdateDto dto, CancellationToken ct)
         {
-            var updated = await _service.UpdateAsync(id, dto, ct);
+            bool updated = await _service.UpdateAsync(id, dto, ct);
             if (!updated)
             {
                 return NotFound($"Book with id {id} not found or update failed");
@@ -59,7 +59,7 @@ namespace back_test_project.Controllers
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
-            var deleted = await _service.DeleteAsync(id, ct);
+            bool deleted = await _service.DeleteAsync(id, ct);
             if (!deleted)
             {
                 return NotFound($"Book with id {id} not found or delete failed");

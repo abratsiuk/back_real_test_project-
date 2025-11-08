@@ -58,7 +58,7 @@ namespace back_test_project.Controllers
         [HttpPut("{id:int}")]
         public async Task<ActionResult> Update(int id, [FromBody] CatUpdateDto dto, CancellationToken ct = default)
         {
-            var updated = await _service.UpdateAsync(id, dto, ct);
+            bool updated = await _service.UpdateAsync(id, dto, ct);
             if (!updated)
             {
                 return NotFound($"Cat with id {id} not found or update failed");
@@ -69,7 +69,7 @@ namespace back_test_project.Controllers
         [HttpDelete("{id:int}")]
         public async Task<ActionResult> Delete(int id, CancellationToken ct = default)
         {
-            var deleted = await _service.DeleteAsync(id, ct);
+            bool deleted = await _service.DeleteAsync(id, ct);
             if (!deleted)
             {
                 return NotFound($"Cat with id {id} not found or delete failed");

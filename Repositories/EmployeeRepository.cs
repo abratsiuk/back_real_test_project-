@@ -5,10 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace back_test_project.Repositories
 {
-    public class EmployeeRepository : IEmployeeRepository
+    public class EmployeeRepository(AppDbContext db) : IEmployeeRepository
     {
-        private readonly AppDbContext _db;
-        public EmployeeRepository(AppDbContext db) => _db = db;
+        private readonly AppDbContext _db = db;
 
         public async Task<IReadOnlyList<EmployeeDataDto>> GetAllDataAsync(CancellationToken cancellationToken = default)
         {
@@ -58,99 +57,113 @@ namespace back_test_project.Repositories
 
         //With tracking!
         public Task<Employee?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
-            => _db.Employees.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
-
-
-        public async Task<int> CreateAsync(EmployeeCreateDto dto, CancellationToken cancellationToken = default)
         {
-            var entity = new Employee
-            {
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-                Salary = dto.Salary,
-                DepartmentId = dto.DepartmentId,
-                ManagerId = dto.ManagerId
-            };
-
-            _db.Employees.Add(entity);
-            await _db.SaveChangesAsync(cancellationToken);
-            return entity.Id;
+            return _db.Employees.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
         }
 
-        public async Task UpdateAsync(Employee entity, EmployeeUpdateDto dto, CancellationToken cancellationToken = default)
+        public async Task CreateAsync(Employee entity, CancellationToken cancellationToken = default)
         {
-            entity.FirstName = dto.FirstName;
-            entity.LastName = dto.LastName;
-            entity.Salary = dto.Salary;
-            entity.DepartmentId = dto.DepartmentId;
-            entity.ManagerId = dto.ManagerId;
-
-            await _db.SaveChangesAsync(cancellationToken);
+            await _db.Employees.AddAsync(entity, cancellationToken);
         }
 
-        public async Task DeleteAsync(Employee entity, CancellationToken cancellationToken = default)
+        public void Remove(Employee entity)
         {
             _db.Employees.Remove(entity);
+        }
+
+        public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
             await _db.SaveChangesAsync(cancellationToken);
         }
 
         public Task<bool> HasSubordinatesAsync(int managerId, CancellationToken cancellationToken = default)
-            => _db.Employees.AnyAsync(e => e.ManagerId == managerId, cancellationToken);
-
-        public Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
         {
-            return _db.Employees.AnyAsync(e => e.Id == id, cancellationToken);
+            return _db.Employees.AnyAsync(e => e.ManagerId == managerId, cancellationToken);
         }
 
-        public async Task<(IReadOnlyList<EmployeeDataDto> Items, int Total)> GetPageAsync(int page, int pageSize, string sort, string order, CancellationToken cancellationToken = default)
+        public async Task<(IReadOnlyList<EmployeeDataDto> Items, int Total)> GetPageAsync(EmployeePageQueryDto query, CancellationToken cancellationToken = default)
         {
-            var baseQuery = _db.Employees
-              .Select(e => new EmployeeDataDto
-              {
-                  Id = e.Id,
-                  FirstName = e.FirstName,
-                  LastName = e.LastName,
-                  DepartmentName = e.Department.DepartmentName,
-                  ManagerFullName = e.Manager != null
-                    ? (e.Manager.FirstName + " " + e.Manager.LastName)
-                    : null,
-                  Salary = e.Salary
-              })
-            .AsQueryable();
+            var whereQuery = _db.Employees.AsQueryable();
 
-            var total = await baseQuery.CountAsync(cancellationToken);
-
-            var sortKey = (sort ?? "lastName").Trim().ToLowerInvariant();
-            var isAsc = string.Equals(order, "asc", StringComparison.OrdinalIgnoreCase);
-
-            IOrderedQueryable<EmployeeDataDto> ordered = sortKey switch
+            if (!string.IsNullOrWhiteSpace(query.FirstName))
             {
-                "firstname" or "firstName" => isAsc ? baseQuery.OrderBy(x => x.FirstName) : baseQuery.OrderByDescending(x => x.FirstName),
-                "lastname" or "lastName" => isAsc ? baseQuery.OrderBy(x => x.LastName) : baseQuery.OrderByDescending(x => x.LastName),
-                "departmentname" => isAsc ? baseQuery.OrderBy(x => x.DepartmentName) : baseQuery.OrderByDescending(x => x.DepartmentName),
-                "managerfullname" => isAsc ? baseQuery.OrderBy(x => x.ManagerFullName) : baseQuery.OrderByDescending(x => x.ManagerFullName),
-                "salary" => isAsc ? baseQuery.OrderBy(x => x.Salary) : baseQuery.OrderByDescending(x => x.Salary),
-                _ => isAsc
-                    ? baseQuery.OrderBy(x => x.LastName).ThenBy(x => x.FirstName)
-                    : baseQuery.OrderByDescending(x => x.LastName).ThenByDescending(x => x.FirstName)
-            };
+                string pattern = query.FirstName.Trim().ToLowerInvariant();
+                whereQuery = whereQuery.Where(e => e.FirstName.ToLowerInvariant().Contains(pattern));
+            }
+            if (!string.IsNullOrWhiteSpace(query.LastName))
+            {
+                string pattern = query.LastName.Trim().ToLowerInvariant();
+                whereQuery = whereQuery.Where(e => e.LastName.ToLowerInvariant().Contains(pattern));
+            }
+            if (query.MinSalary.HasValue)
+            {
+                whereQuery = whereQuery.Where(e => e.Salary >= query.MinSalary.Value);
+            }
+            if (query.MaxSalary.HasValue)
+            {
+                whereQuery = whereQuery.Where(e => e.Salary <= query.MaxSalary.Value);
+            }
+            if (query.DepartmentId.HasValue)
+            {
+                whereQuery = whereQuery.Where(e => e.DepartmentId == query.DepartmentId.Value);
+            }
+            if (query.ManagerId.HasValue)
+            {
+                whereQuery = whereQuery.Where(e => e.ManagerId == query.ManagerId.Value);
+            }
 
-            var skip = Math.Max(0, page) * Math.Max(1, pageSize);
-
-
-            List<EmployeeDataDto> items;
+            int total = await whereQuery.CountAsync(cancellationToken);
             if (total == 0)
             {
-                items = new List<EmployeeDataDto>();
-            }
-            else
-            {
-                items = await ordered
-                        .Skip(skip)
-                        .Take(Math.Max(1, pageSize))
-                        .ToListAsync(cancellationToken);
+                return (Array.Empty<EmployeeDataDto>(), 0);
             }
 
+            var selectQuery = whereQuery.Select(e => new EmployeeDataDto
+            {
+                Id = e.Id,
+                FirstName = e.FirstName,
+                LastName = e.LastName,
+                DepartmentName = e.Department.DepartmentName,
+                ManagerFullName = e.Manager != null
+                    ? (e.Manager.FirstName + " " + e.Manager.LastName)
+                    : null,
+                Salary = e.Salary
+            });
+
+            string sortKey = (query.Sort ?? "lastname").Trim().ToLowerInvariant();
+            bool isAsc = string.Equals(query.Order, "asc", StringComparison.OrdinalIgnoreCase);
+
+            var orderedQuery = sortKey switch
+            {
+                "id" => isAsc
+                    ? selectQuery.OrderBy(x => x.Id)
+                    : selectQuery.OrderByDescending(x => x.Id),
+                "firstname" => isAsc
+                    ? selectQuery.OrderBy(x => x.FirstName)
+                    : selectQuery.OrderByDescending(x => x.FirstName),
+                "lastname" => isAsc
+                    ? selectQuery.OrderBy(x => x.LastName)
+                    : selectQuery.OrderByDescending(x => x.LastName),
+                "departmentname" => isAsc
+                    ? selectQuery.OrderBy(x => x.DepartmentName)
+                    : selectQuery.OrderByDescending(x => x.DepartmentName),
+                "managerfullname" => isAsc
+                    ? selectQuery.OrderBy(x => x.ManagerFullName)
+                    : selectQuery.OrderByDescending(x => x.ManagerFullName),
+                "salary" => isAsc
+                    ? selectQuery.OrderBy(x => x.Salary)
+                    : selectQuery.OrderByDescending(x => x.Salary),
+                _ => isAsc
+                    ? selectQuery.OrderBy(x => x.LastName)
+                    : selectQuery.OrderByDescending(x => x.LastName)
+            };
+
+            int skip = Math.Max(0, query.Page) * Math.Max(1, query.PageSize);
+
+            var items = await orderedQuery
+                        .Skip(skip)
+                        .Take(Math.Max(1, query.PageSize))
+                        .ToListAsync(cancellationToken);
             return (items, total);
         }
     }
