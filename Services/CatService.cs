@@ -50,9 +50,8 @@ namespace back_test_project.Services
             {
                 await _repository.CreateAsync(entity, cancellationToken);
                 await _repository.SaveChangesAsync(cancellationToken);
-                var newId = entity.Id;
 
-                var result = new CatDataDto { Id = newId, Name = dto.Name, Age = dto.Age };
+                var result = new CatDataDto { Id = entity.Id, Name = entity.Name, Age = entity.Age };
                 return result;
             }
             catch (DbUpdateException dbUpdateException)
@@ -100,7 +99,12 @@ namespace back_test_project.Services
         public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
             var entity = await _repository.GetByIdAsync(id, cancellationToken);
-            if (entity == null) { return false; }
+            if (entity == null)
+            {
+                _logger.LogWarning("Cat with Id {Id} not found for deletion.", id);
+                return false;
+            }
+
             try
             {
                 _repository.Remove(entity);

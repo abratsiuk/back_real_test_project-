@@ -65,7 +65,7 @@ namespace back_test_project.Repositories
             if (!string.IsNullOrWhiteSpace(query.Name))
             {
                 var pattern = query.Name.Trim().ToLower();
-                baseQuery = baseQuery.Where(c => c.Name.ToLower().Contains(pattern));
+                baseQuery = baseQuery.Where(c => c.Name.ToLowerInvariant().Contains(pattern));
             }
             if (query.MinAge.HasValue)
                 baseQuery = baseQuery.Where(c => c.Age >= query.MinAge.Value);
