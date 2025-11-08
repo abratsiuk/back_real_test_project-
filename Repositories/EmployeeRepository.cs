@@ -88,12 +88,12 @@ namespace back_test_project.Repositories
             if (!string.IsNullOrWhiteSpace(query.FirstName))
             {
                 string pattern = query.FirstName.Trim().ToLowerInvariant();
-                whereQuery = whereQuery.Where(e => e.FirstName.ToLowerInvariant().Contains(pattern));
+                whereQuery = whereQuery.Where(e => e.FirstName.ToLower().Contains(pattern));
             }
             if (!string.IsNullOrWhiteSpace(query.LastName))
             {
                 string pattern = query.LastName.Trim().ToLowerInvariant();
-                whereQuery = whereQuery.Where(e => e.LastName.ToLowerInvariant().Contains(pattern));
+                whereQuery = whereQuery.Where(e => e.LastName.ToLower().Contains(pattern));
             }
             if (query.MinSalary.HasValue)
             {

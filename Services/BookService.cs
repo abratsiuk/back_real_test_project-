@@ -2,6 +2,7 @@
 using back_test_project.Models;
 using back_test_project.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace back_test_project.Services
 {
@@ -56,6 +57,12 @@ namespace back_test_project.Services
 
         public async Task<BookDataDto> CreateAsync(BookCreateDto dto, CancellationToken cancellationToken = default)
         {
+            bool exists = await _repository.ExistsByTitleAndAuthorsAsync(dto.Title, dto.Authors, cancellationToken);
+            if (exists)
+            {
+                throw new ValidationException("A book with the same title and authors already exists.");
+            }
+
             var entity = new Book
             {
                 Title = dto.Title.Trim(),
@@ -91,6 +98,12 @@ namespace back_test_project.Services
 
         public async Task<bool> UpdateAsync(int id, BookUpdateDto dto, CancellationToken cancellationToken = default)
         {
+            bool duplicateExists = await _repository.ExistsAnotherWithSameTitleAndAuthorsAsync(id, dto.Title, dto.Authors, cancellationToken);
+            if (duplicateExists)
+            {
+                throw new ValidationException("Another book with the same title and authors already exists.");
+            }
+
             var entity = await _repository.GetByIdAsync(id, cancellationToken);
             if (entity == null)
             {

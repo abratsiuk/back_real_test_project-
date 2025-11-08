@@ -18,5 +18,7 @@ namespace back_test_project.Repositories
 
         Task<(IReadOnlyList<BookDataDto> Items, int Total)> GetPageAsync(
             BookPageQueryDto query, CancellationToken cancellationToken = default);
+        Task<bool> ExistsByTitleAndAuthorsAsync(string title, string authors, CancellationToken cancellationToken = default);
+        Task<bool> ExistsAnotherWithSameTitleAndAuthorsAsync(int id, string title, string authors, CancellationToken cancellationToken = default);
     }
 }

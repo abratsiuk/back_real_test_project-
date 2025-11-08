@@ -66,12 +66,12 @@ namespace back_test_project.Repositories
             if (!string.IsNullOrWhiteSpace(query.Title))
             {
                 string pattern = query.Title.Trim().ToLowerInvariant();
-                whereQuery = whereQuery.Where(b => b.Title.ToLowerInvariant().Contains(pattern));
+                whereQuery = whereQuery.Where(b => b.Title.ToLower().Contains(pattern));
             }
             if (!string.IsNullOrWhiteSpace(query.Authors))
             {
                 string pattern = query.Authors.Trim().ToLowerInvariant();
-                whereQuery = whereQuery.Where(b => b.Authors.ToLowerInvariant().Contains(pattern));
+                whereQuery = whereQuery.Where(b => b.Authors.ToLower().Contains(pattern));
             }
 
             if (query.MinYear.HasValue)
@@ -120,6 +120,25 @@ namespace back_test_project.Repositories
                         .ToListAsync(cancellationToken);
 
             return (items, total);
+        }
+
+        public async Task<bool> ExistsByTitleAndAuthorsAsync(string title, string authors, CancellationToken cancellationToken = default)
+        {
+            return await _db.Books
+                .AnyAsync(b =>
+                    b.Title.ToLowerInvariant() == title.Trim().ToLowerInvariant() &&
+                    b.Authors.ToLowerInvariant() == authors.Trim().ToLowerInvariant(),
+                    cancellationToken);
+        }
+
+        public async Task<bool> ExistsAnotherWithSameTitleAndAuthorsAsync(int id, string title, string authors, CancellationToken cancellationToken = default)
+        {
+            return await _db.Books
+                     .AnyAsync(b =>
+                         b.Id != id &&
+                         b.Title.ToLowerInvariant() == title.Trim().ToLowerInvariant() &&
+                         b.Authors.ToLowerInvariant() == authors.Trim().ToLowerInvariant(),
+                         cancellationToken);
         }
     }
 }
