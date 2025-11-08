@@ -56,10 +56,7 @@ namespace back_test_project.Repositories
         }
 
         public async Task<(IReadOnlyList<CatDataDto> Items, int Total)> GetPageAsync(
-            int page,
-            int pageSize,
-            string sort,
-            string order,
+            CatPageQueryDto query,
             CancellationToken cancellationToken = default)
         {
             var baseQuery = _db.Cats
@@ -69,14 +66,26 @@ namespace back_test_project.Repositories
                     Name = c.Name,
                     Age = c.Age
                 });
+            if (!string.IsNullOrWhiteSpace(query.Name))
+            {
+                var pattern = query.Name.Trim().ToLower();
+                baseQuery = baseQuery.Where(c => c.Name.ToLower().Contains(pattern));
+            }
+            if (query.MinAge.HasValue)
+                baseQuery = baseQuery.Where(c => c.Age >= query.MinAge.Value);
+
+            if (query.MaxAge.HasValue)
+                baseQuery = baseQuery.Where(c => c.Age <= query.MaxAge.Value);
+
 
             var total = await baseQuery.CountAsync(cancellationToken);
 
-            var safePage = page < 0 ? 0 : page;
-            var safePageSize = pageSize <= 0 ? 10 : pageSize;
+            var safePage = query.Page < 0 ? 0 : query.Page;
+            var safePageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
-            var sortKey = (sort ?? "name").Trim().ToLowerInvariant();
-            var isAsc = string.Equals(order, "asc", StringComparison.OrdinalIgnoreCase);
+            var sortKey = (query.Sort ?? "name").Trim().ToLowerInvariant();
+            var isAsc = string.Equals(query.Order, "asc", StringComparison.OrdinalIgnoreCase);
+
 
             IOrderedQueryable<CatDataDto> ordered = sortKey switch
             {

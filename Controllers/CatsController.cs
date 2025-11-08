@@ -21,6 +21,22 @@ namespace back_test_project.Controllers
         //    return Ok(cats);
         //}
 
+        [HttpGet("page")]
+        public async Task<ActionResult<PagedResultDto<CatDataDto>>> GetPage(
+           [FromQuery] CatPageQueryDto query,
+           CancellationToken ct = default)
+        {
+            var (items, total) = await _service.GetPageAsync(query, ct);
+
+            var result = new PagedResultDto<CatDataDto>
+            {
+                Data = items,
+                TotalCount = total
+            };
+
+            return Ok(result);
+        }
+
         [HttpGet("{id:int}")]
         public async Task<ActionResult<CatDataDto>> GetById(int id, CancellationToken ct = default)
         {
@@ -62,24 +78,7 @@ namespace back_test_project.Controllers
             return NoContent();
         }
 
-        [HttpGet("page")]
-        public async Task<ActionResult<PagedResultDto<CatDataDto>>> GetPage(
-           [FromQuery] int page = 0,
-           [FromQuery] int pageSize = 10,
-           [FromQuery] string sort = "name",
-           [FromQuery] string order = "asc",
-           CancellationToken ct = default)
-        {
-            var (items, total) = await _service.GetPageAsync(page, pageSize, sort, order, ct);
 
-            var result = new PagedResultDto<CatDataDto>
-            {
-                Data = items,
-                TotalCount = total
-            };
-
-            return Ok(result);
-        }
 
     }
 }

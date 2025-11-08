@@ -52,6 +52,10 @@ namespace back_test_project.Services
             {
                 throw new ArgumentException("Cat name cannot be null or empty.", nameof(dto.Name));
             }
+            if (dto.Name.Trim().Length > 50)
+            {
+                throw new ArgumentException("Cat name cannot exceed 50 characters.", nameof(dto.Name));
+            }
             if (dto.Age < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(dto.Age), "Cat age cannot be negative.");
@@ -61,7 +65,7 @@ namespace back_test_project.Services
                 throw new ArgumentOutOfRangeException(nameof(dto.Age), "Cat age cannot be greater than 100.");
             }
 
-            var entity = new Cat { Name = dto.Name, Age = dto.Age };
+            var entity = new Cat { Name = dto.Name.Trim(), Age = dto.Age };
 
             try
             {
@@ -110,6 +114,10 @@ namespace back_test_project.Services
             {
                 throw new ArgumentException("Cat name cannot be null or empty.", nameof(dto.Name));
             }
+            if (dto.Name.Trim().Length > 50)
+            {
+                throw new ArgumentException("Cat name cannot exceed 50 characters.", nameof(dto.Name));
+            }
             if (dto.Age < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(dto.Age), "Cat age cannot be negative.");
@@ -126,7 +134,7 @@ namespace back_test_project.Services
                 return false;
             }
 
-            entity.Name = dto.Name;
+            entity.Name = dto.Name.Trim();
             entity.Age = dto.Age;
 
             try
@@ -149,21 +157,18 @@ namespace back_test_project.Services
 
 
         public async Task<(IReadOnlyList<CatDataDto> Items, int Total)> GetPageAsync(
-            int page,
-            int pageSize,
-            string sort,
-            string order,
+            CatPageQueryDto query,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _repository.GetPageAsync(page, pageSize, sort, order, cancellationToken);
+                return await _repository.GetPageAsync(query, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
                     "Error while getting cats page. page={Page}, pageSize={PageSize}, sort={Sort}, order={Order}",
-                    page, pageSize, sort, order);
+                    query.Page, query.PageSize, query.Sort, query.Order);
                 throw;
             }
         }

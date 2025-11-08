@@ -13,10 +13,7 @@ namespace back_test_project.Repositories
         Task DeleteAsync(Cat entity, CancellationToken cancellationToken = default);
 
         Task<(IReadOnlyList<CatDataDto> Items, int Total)> GetPageAsync(
-            int page,
-            int pageSize,
-            string sort,
-            string order,
+            CatPageQueryDto query,
             CancellationToken cancellationToken = default);
 
     }
